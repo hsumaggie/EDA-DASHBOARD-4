@@ -53,7 +53,7 @@
                 </h1>
                 <div class="flex items-center gap-3 mt-2 flex-wrap">
                     <span class="text-xl font-bold text-slate-800">EDA Procurement</span>
-                    <span class="text-sm text-slate-600">Opex Spend Latest Forecast Version</span>
+                    <span class="text-sm text-slate-600">Operation Spend Latest Forecast Version</span>
                     <span class="border border-slate-400 rounded px-2 py-0.5 text-sm font-mono text-slate-700">2026/06/05</span>
                 </div>
             </div>
@@ -61,7 +61,7 @@
                 <div class="bg-gsm-brown text-white text-sm font-semibold px-8 py-1 rounded mb-1">Overview</div>
                 <div class="flex gap-1 justify-end">
                     <span class="bg-gsm-blue text-white text-xs font-semibold px-6 py-1 rounded">MFG</span>
-                    <span class="bg-gsm-blue text-white text-xs font-semibold px-4 py-1 rounded">Opex Spend</span>
+                    <span class="bg-gsm-blue text-white text-xs font-semibold px-4 py-1 rounded">Operation Spend</span>
                 </div>
                 <p class="text-[10px] text-slate-500 mt-1">Amount: USD</p>
             </div>
@@ -355,33 +355,33 @@
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 25, borrowWeeks: 26,   formalP95: 95, tempP95: 88, lan: 120000, wan: 60000, category: "Verification",   func: "Simulation",           tml: "CW Ko" },
+                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 25, borrowWeeks: 26,   formalP95: 95, tempP95: 88, lan: 60000, wan: 120000, category: "Verification",   func: "Simulation",           tml: "CW Ko" },
                         { tool: "PrimeTime PX Signoff",      formalQty: 80,  tempQty: 18, borrowWeeks: 23.4, formalP95: 92, tempP95: 82, lan: 70000,  wan: 40000, category: "Signoff",        func: "Timing Analysis",      tml: "CC Mao" },
                         { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 15, borrowWeeks: 18.7, formalP95: 80, tempP95: 65, lan: 60000,  wan: 30000, category: "Synthesis",      func: "Logic Synthesis",      tml: "CM Chen" },
                         { tool: "IC Compiler II",            formalQty: 60,  tempQty: 5,  borrowWeeks: 16.1, formalP95: 75, tempP95: 60, lan: 35000,  wan: 15000, category: "Implementation", func: "Place & Route",        tml: "George Chien" },
                         { tool: "StarRC Extraction",         formalQty: 120, tempQty: 6,  borrowWeeks: 5.2,  formalP95: 72, tempP95: 75, lan: 15000,  wan: 5000,  category: "Signoff",        func: "Parasitic Extraction", tml: "CW Ko" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 26,   formalP95: 90, tempP95: 80, lan: 100000, wan: 50000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 26,   formalP95: 90, tempP95: 80, lan: 50000, wan: 100000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
                         { tool: "Innovus Implementation System", formalQty: 100, tempQty: 12, borrowWeeks: 18.2, formalP95: 85, tempP95: 75, lan: 70000,  wan: 30000, category: "Implementation", func: "Place & Route",         tml: "CM Chen" },
                         { tool: "Spectre APS Simulator",         formalQty: 200, tempQty: 10, borrowWeeks: 10.4, formalP95: 70, tempP95: 65, lan: 35000,  wan: 15000, category: "Verification",   func: "Circuit Simulation",    tml: "CC Mao" },
                         { tool: "Tempus Timing Signoff",         formalQty: 80,  tempQty: 4,  borrowWeeks: 7.8,  formalP95: 65, tempP95: 50, lan: 15000,  wan: 5000,  category: "Signoff",        func: "Timing Analysis",       tml: "CW Ko" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS",         formalQty: 150, tempQty: 15, borrowWeeks: 20.8, formalP95: 88, tempP95: 65, lan: 60000, wan: 30000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
-                        { tool: "Tessent SiliconTest",       formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 90, tempP95: 60, lan: 30000, wan: 10000, category: "DFT",          func: "Silicon Test",          tml: "CW Ko" },
-                        { tool: "Questa Advanced Simulator", formalQty: 120, tempQty: 8,  borrowWeeks: 10.4, formalP95: 72, tempP95: 62, lan: 15000, wan: 5000,  category: "Verification", func: "Logic Verification",    tml: "CC Mao" }
+                        { tool: "Calibre nmDRC/LVS",         formalQty: 150, tempQty: 15, borrowWeeks: 20.8, formalP95: 88, tempP95: 65, lan: 30000, wan: 60000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Tessent SiliconTest",       formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 90, tempP95: 60, lan: 10000, wan: 30000, category: "DFT",          func: "Silicon Test",          tml: "CW Ko" },
+                        { tool: "Questa Advanced Simulator", formalQty: 120, tempQty: 8,  borrowWeeks: 10.4, formalP95: 72, tempP95: 62, lan: 5000, wan: 15000,  category: "Verification", func: "Logic Verification",    tml: "CC Mao" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity",  formalQty: 80,  tempQty: 8, borrowWeeks: 20.8, formalP95: 85, tempP95: 65, lan: 45000, wan: 20000, category: "Signoff", func: "Power Integrity",    tml: "CM Chen" },
-                        { tool: "Totem-SC Mixed-Signal Power", formalQty: 100, tempQty: 5, borrowWeeks: 10.4, formalP95: 70, tempP95: 60, lan: 20000, wan: 10000, category: "Signoff", func: "Mixed-Signal Power", tml: "CM Chen" }
+                        { tool: "RedHawk-SC Power Integrity",  formalQty: 80,  tempQty: 8, borrowWeeks: 20.8, formalP95: 85, tempP95: 65, lan: 20000, wan: 45000, category: "Signoff", func: "Power Integrity",    tml: "CM Chen" },
+                        { tool: "Totem-SC Mixed-Signal Power", formalQty: 100, tempQty: 5, borrowWeeks: 10.4, formalP95: 70, tempP95: 60, lan: 10000, wan: 20000, category: "Signoff", func: "Mixed-Signal Power", tml: "CM Chen" }
                     ],
                     "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
                 prTracking: {
                     "Synopsys_HW": [
                         { status: "Completed",   product: "HPC Processing Server Rack", spending: 600000, bu: "GPU Verification BU", project: "N3P Alpha Project", tml: "CC Mao", prCompletionDate: "2026/02/01", projectRequiredDate: "2026/03/15", supplierDeliveryDate: "2026/03/14", acceptanceDate: "2026/03/18" },
-                        { status: "In Progress", product: "GPU Compute Expansion Rack", spending: 400000, bu: "CPU Design BU",       project: "N2 Ultra Project",  tml: "CW Ko",  prCompletionDate: "2025/12/15", projectRequiredDate: "2026/03/20", supplierDeliveryDate: "2026/03/21", acceptanceDate: null }
+                        { status: "In Progress", product: "GPU Compute Expansion Rack", spending: 400000, bu: "CPU Design BU",       project: "N2 Ultra Project",  tml: "CW Ko",  prCompletionDate: "2026/01/10", projectRequiredDate: "2026/03/20", supplierDeliveryDate: "2026/03/21", acceptanceDate: null }
                     ],
                     "Cadence_HW": []
                 },
@@ -432,20 +432,20 @@
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 15, borrowWeeks: 20.8, formalP95: 95, tempP95: 82, lan: 60000, wan: 40000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
-                        { tool: "PrimeTime PX Signoff",      formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 92, tempP95: 66, lan: 30000, wan: 20000, category: "Signoff",      func: "Timing Analysis", tml: "CC Mao" },
-                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 10, borrowWeeks: 10.4, formalP95: 80, tempP95: 62, lan: 20000, wan: 10000, category: "Synthesis",    func: "Logic Synthesis", tml: "CM Chen" }
+                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 15, borrowWeeks: 20.8, formalP95: 95, tempP95: 82, lan: 40000, wan: 60000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
+                        { tool: "PrimeTime PX Signoff",      formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 92, tempP95: 66, lan: 20000, wan: 30000, category: "Signoff",      func: "Timing Analysis", tml: "CC Mao" },
+                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 10, borrowWeeks: 10.4, formalP95: 80, tempP95: 62, lan: 10000, wan: 20000, category: "Synthesis",    func: "Logic Synthesis", tml: "CM Chen" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 5,  borrowWeeks: 18.2, formalP95: 90, tempP95: 64, lan: 60000, wan: 30000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
-                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 10, borrowWeeks: 12.5, formalP95: 85, tempP95: 60, lan: 40000, wan: 20000, category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 5,  borrowWeeks: 18.2, formalP95: 90, tempP95: 64, lan: 30000, wan: 60000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 10, borrowWeeks: 12.5, formalP95: 85, tempP95: 60, lan: 20000, wan: 40000, category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS",   formalQty: 150, tempQty: 10, borrowWeeks: 15.6, formalP95: 88, tempP95: 62, lan: 20000, wan: 10000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
-                        { tool: "Tessent SiliconTest", formalQty: 80,  tempQty: 8,  borrowWeeks: 10.4, formalP95: 90, tempP95: 58, lan: 13000, wan: 7000,  category: "DFT",          func: "Silicon Test",          tml: "CW Ko" }
+                        { tool: "Calibre nmDRC/LVS",   formalQty: 150, tempQty: 10, borrowWeeks: 15.6, formalP95: 88, tempP95: 62, lan: 10000, wan: 20000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Tessent SiliconTest", formalQty: 80,  tempQty: 8,  borrowWeeks: 10.4, formalP95: 90, tempP95: 58, lan: 7000, wan: 13000,  category: "DFT",          func: "Silicon Test",          tml: "CW Ko" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 5, borrowWeeks: 15.6, formalP95: 85, tempP95: 60, lan: 25000, wan: 10000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
+                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 5, borrowWeeks: 15.6, formalP95: 85, tempP95: 60, lan: 10000, wan: 25000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
                     ],
                     "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
@@ -506,18 +506,18 @@
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra",  formalQty: 100, tempQty: 3, borrowWeeks: 7.8, formalP95: 95, tempP95: 60, lan: 20000, wan: 10000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
+                        { tool: "VCS Simulator Ultra",  formalQty: 100, tempQty: 3, borrowWeeks: 7.8, formalP95: 95, tempP95: 60, lan: 10000, wan: 20000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
                         { tool: "PrimeTime PX Signoff", formalQty: 80,  tempQty: 2, borrowWeeks: 5.2, formalP95: 92, tempP95: 55, lan: 7000,  wan: 3000,  category: "Signoff",      func: "Timing Analysis", tml: "CC Mao" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 20.8, formalP95: 90, tempP95: 78, lan: 20000, wan: 10000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
-                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 2,  borrowWeeks: 5.2,  formalP95: 85, tempP95: 55, lan: 13000, wan: 7000,  category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 20.8, formalP95: 90, tempP95: 78, lan: 10000, wan: 20000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 2,  borrowWeeks: 5.2,  formalP95: 85, tempP95: 55, lan: 7000, wan: 13000,  category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 5, borrowWeeks: 10.4, formalP95: 88, tempP95: 58, lan: 10000, wan: 5000, category: "Verification", func: "Physical Verification", tml: "George Chien" }
+                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 5, borrowWeeks: 10.4, formalP95: 88, tempP95: 58, lan: 5000, wan: 10000, category: "Verification", func: "Physical Verification", tml: "George Chien" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 1, borrowWeeks: 5.2, formalP95: 85, tempP95: 52, lan: 7000, wan: 3000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
+                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 1, borrowWeeks: 5.2, formalP95: 85, tempP95: 52, lan: 3000, wan: 7000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
                     ],
                     "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
