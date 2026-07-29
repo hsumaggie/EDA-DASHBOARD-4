@@ -824,13 +824,17 @@
                 var rec = records[i];
                 var leadTime = getDaysDiff(rec.prCompletionDate, rec.projectRequiredDate);
                 var shortfall = Math.max(PR_LEAD_TIME_THRESHOLD - leadTime, 0);
-                var leadClass = shortfall > 0 ? 'text-rose-600 font-bold' : 'text-slate-700';
-                var shortfallClass = shortfall > 0 ? 'text-rose-600 font-bold' : 'text-slate-400';
+                // PR Lead Time > 90 天（等同 Shortfall = 0）代表準備時間足夠 → 綠字；反之標紅提醒
+                var leadClass = shortfall === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
+                var shortfallClass = shortfall === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
 
-                // 供應商交付日晚於專案需求日 → 標紅，代表該筆未達成準時交付
-                var deliveryLate = rec.supplierDeliveryDate && rec.projectRequiredDate
-                    && new Date(rec.supplierDeliveryDate) > new Date(rec.projectRequiredDate);
-                var deliveryClass = deliveryLate ? 'text-rose-600 font-bold' : 'text-slate-600';
+                // 供應商交付日早於專案需求日 → 綠字（提早交付）；晚於 → 紅字（delay）；剛好同一天 → 中性灰
+                var deliveryClass = 'text-slate-600';
+                if (rec.supplierDeliveryDate && rec.projectRequiredDate) {
+                    var deliveryDiff = new Date(rec.supplierDeliveryDate) - new Date(rec.projectRequiredDate);
+                    if (deliveryDiff < 0) deliveryClass = 'text-emerald-600 font-bold';
+                    else if (deliveryDiff > 0) deliveryClass = 'text-rose-600 font-bold';
+                }
 
                 var statusClass = rec.status === 'In Progress' ? 'text-gsm-blue font-bold' : 'font-bold text-slate-700';
                 var rowClass = rec.status === 'In Progress' ? 'bg-blue-50/50 hover:bg-blue-100/50' : 'hover:bg-slate-50';
