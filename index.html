@@ -1,20 +1,24 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EDA Procurement 採購管理系統</title>
-    <!-- 引入 Tailwind CSS CDN -->
+    <title>GSM Dashboard Planning - EDA Procurement</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            50: '#f0f4f8',
-                            100: '#dbe3ed',
-                            800: '#1e293b',
+                        gsm: {
+                            teal: '#4FA9A0',
+                            tealDark: '#3D8B83',
+                            tealLight: '#E8F4F2',
+                            orange: '#E87722',
+                            brown: '#8C6D31',
+                            blue: '#4472C4',
+                            risk: '#E8837B',
+                            watch: '#F5EFA0'
                         }
                     }
                 }
@@ -22,1704 +26,908 @@
         }
     </script>
     <style>
-        /* 呼吸燈動畫 */
-        @keyframes pulse-red {
-            0%, 100% { transform: scale(1); opacity: 1; }
-            50% { transform: scale(1.2); opacity: 0.6; }
-        }
-        .animate-pulse-red {
-            animation: pulse-red 2s infinite ease-in-out;
-        }
         /* 表格橫向捲軸加粗加色，避免細長的預設捲軸不容易被注意到 */
         .overflow-x-auto {
             scrollbar-width: auto;
             scrollbar-color: #94a3b8 #f1f5f9;
         }
-        .overflow-x-auto::-webkit-scrollbar {
-            height: 14px;
-        }
-        .overflow-x-auto::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
+        .overflow-x-auto::-webkit-scrollbar { height: 14px; }
+        .overflow-x-auto::-webkit-scrollbar-track { background: #f1f5f9; }
         .overflow-x-auto::-webkit-scrollbar-thumb {
             background-color: #94a3b8;
             border-radius: 999px;
             border: 3px solid #f1f5f9;
         }
-        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
-            background-color: #64748b;
-        }
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover { background-color: #64748b; }
     </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen">
 
-    <!-- 頂部導航欄 (動態顯示當下日期) -->
-    <header class="bg-brand-900 text-white shadow-md px-8 py-4 flex justify-between items-center bg-slate-900">
-        <div>
-            <h1 class="text-xl font-bold tracking-wide text-white">EDA Procurement</h1>
-            <p class="text-xs text-slate-400">EDA 採購與授權決策管理系統</p>
-        </div>
-        <div class="text-sm text-slate-300">
-            權限：高階管理處 | 數據更新時間：<span id="current-date-span" class="font-bold">2026/03/01</span>
-        </div>
-    </header>
+    <div class="max-w-[1600px] mx-auto px-6 py-5">
 
-    <div class="max-w-7xl mx-auto p-6">
-        
-        <!-- 麵包屑導航 -->
-        <nav class="mb-6 flex items-center space-x-2 text-sm text-slate-500">
-            <span class="cursor-pointer hover:text-blue-600 font-medium" onclick="window.showLevel1()">首頁</span>
-            <span id="breadcrumb-separator" class="hidden">/</span>
-            <span id="breadcrumb-level2" class="hidden text-slate-800 font-semibold"></span>
-        </nav>
-
-        <!-- ==================== 第一層儀表板 ==================== -->
-        <div id="level1-dashboard" class="space-y-6">
-            
-            <!-- 動態控制面板 -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-                <div class="flex flex-wrap items-center gap-4">
-                    <!-- 年度選擇器 -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-semibold text-slate-500">觀測年度：</span>
-                        <div class="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50 text-xs font-semibold" id="year-tabs">
-                            <button class="px-3 py-1.5 rounded-md transition bg-white text-slate-800 shadow-sm" onclick="window.setFilterYear('2026', this)">2026 (當年度)</button>
-                        </div>
-                    </div>
-
-                    <!-- 廠商篩選 -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-semibold text-slate-500">選擇廠商：</span>
-                        <select id="vendor-select" onchange="window.setFilterVendor(this.value)" class="text-xs font-semibold rounded-md border border-slate-300 p-2 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
-                            <option value="All">全部廠商 (All Vendors)</option>
-                            <option value="Synopsys">Synopsys</option>
-                            <option value="Cadence">Cadence</option>
-                            <option value="Siemens EDA">Siemens EDA</option>
-                            <option value="Ansys">Ansys</option>
-                            <option value="Keysight">Keysight</option>
-                        </select>
-                    </div>
-
-                    <!-- 授權類型篩選 -->
-                    <div class="flex items-center space-x-2">
-                        <span class="text-sm font-semibold text-slate-500">授權類型：</span>
-                        <div class="inline-flex rounded-lg border border-slate-200 p-1 bg-slate-50 text-xs font-semibold" id="filter-tabs">
-                            <button class="px-3 py-1.5 rounded-md transition bg-white text-slate-800 shadow-sm" onclick="window.setFilterType('All', this)">全部</button>
-                            <button class="px-3 py-1.5 rounded-md transition text-slate-600 hover:text-slate-900" onclick="window.setFilterType('Software', this)">Software</button>
-                            <button class="px-3 py-1.5 rounded-md transition text-slate-600 hover:text-slate-900" onclick="window.setFilterType('Hardware', this)">Hardware</button>
-                            <button class="px-3 py-1.5 rounded-md transition text-slate-600 hover:text-slate-900" onclick="window.setFilterType('Hardware Maintenance', this)">Maintenance</button>
-                        </div>
-                    </div>
+        <!-- ==================== 頁首：GSM Dashboard Planning ==================== -->
+        <div class="flex justify-between items-start mb-5">
+            <div>
+                <h1 class="text-3xl font-bold text-gsm-orange">
+                    GSM Dashboard Planning <span class="text-xl">(Procurement &amp; Capacity)</span>
+                </h1>
+                <div class="flex items-center gap-3 mt-2 flex-wrap">
+                    <span class="text-xl font-bold text-slate-800">EDA Procurement</span>
+                    <span class="text-sm text-slate-600">Opex Spend Latest Forecast Version</span>
+                    <span class="border border-slate-400 rounded px-2 py-0.5 text-sm font-mono text-slate-700">2026/06/05</span>
                 </div>
+            </div>
+            <div class="text-right shrink-0">
+                <div class="bg-gsm-brown text-white text-sm font-semibold px-8 py-1 rounded mb-1">Overview</div>
+                <div class="flex gap-1 justify-end">
+                    <span class="bg-gsm-blue text-white text-xs font-semibold px-6 py-1 rounded">MFG</span>
+                    <span class="bg-gsm-blue text-white text-xs font-semibold px-4 py-1 rounded">Opex Spend</span>
+                </div>
+                <p class="text-[10px] text-slate-500 mt-1">Amount: USD</p>
+            </div>
+        </div>
 
-                <div class="flex items-center space-x-4 text-xs">
-                    <span class="text-slate-400 font-semibold">Borrow Risk Score 曝險評級：</span>
-                    <span class="flex items-center text-slate-600">
-                        <span class="w-3 h-3 rounded-full bg-rose-500 mr-1.5 animate-pulse-red"></span> 高風險
-                    </span>
-                    <span class="flex items-center text-slate-600">
-                        <span class="w-3 h-3 rounded-full bg-amber-500 mr-1.5"></span> 中風險
-                    </span>
-                    <span class="flex items-center text-slate-600">
-                        <span class="w-3 h-3 rounded-full bg-emerald-500 mr-1.5"></span> 低風險
-                    </span>
+        <!-- 麵包屑 -->
+        <div class="text-sm text-slate-500 mb-3">
+            <span class="cursor-pointer hover:text-gsm-blue hover:underline" onclick="window.showLayer3()">Overview (Layer 3)</span>
+            <span id="breadcrumb-separator" class="hidden mx-2">/</span>
+            <span id="breadcrumb-layer4" class="hidden font-semibold text-slate-700"></span>
+        </div>
+
+        <!-- ==================== Layer 3：各供應商總覽 ==================== -->
+        <div id="layer3-dashboard">
+
+            <!-- 篩選列 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 px-5 py-3 mb-4 flex flex-wrap items-center gap-6">
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-600">Year</span>
+                    <select id="filter-year" class="border border-slate-300 rounded px-3 py-1 text-sm bg-white" onchange="window.setFilterYear(this.value)">
+                        <option value="2026">2026</option>
+                        <option value="2027">2027</option>
+                        <option value="2028">2028</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-600">Vendor</span>
+                    <select id="filter-vendor" class="border border-slate-300 rounded px-3 py-1 text-sm bg-white" onchange="window.setFilterVendor(this.value)">
+                        <option value="All">All</option>
+                        <option value="Synopsys">Synopsys</option>
+                        <option value="Cadence">Cadence</option>
+                        <option value="Siemens EDA">Siemens EDA</option>
+                        <option value="Ansys">Ansys</option>
+                        <option value="Keysight">Keysight</option>
+                    </select>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-sm font-semibold text-slate-600">Type</span>
+                    <select id="filter-type" class="border border-slate-300 rounded px-3 py-1 text-sm bg-white" onchange="window.setFilterType(this.value)">
+                        <option value="All">All</option>
+                        <option value="Software">Software</option>
+                        <option value="Hardware">Hardware</option>
+                        <option value="Hardware Maintenance">Maintenance</option>
+                    </select>
                 </div>
             </div>
 
-            <!-- 大盤指標 (需求與預算對調) -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">篩選總需求金額 (DEMAND)</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="kpi-demand">$14,820,000</p>
+            <!-- KPI 卡片 -->
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+                <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
+                    <span class="text-base font-bold text-slate-700">Demand</span>
+                    <span class="text-2xl font-bold text-gsm-blue" id="kpi-demand">$0</span>
                 </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">篩選總預算金額 (BUDGET)</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="kpi-budget">$14,050,000</p>
+                <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
+                    <span class="text-base font-bold text-slate-700">Budget</span>
+                    <span class="text-2xl font-bold text-gsm-blue" id="kpi-budget">$0</span>
                 </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">篩選實際花費 (SPENDING)</p>
-                    <p class="text-2xl font-bold text-slate-800 mt-1" id="kpi-spending">$13,930,000</p>
+                <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
+                    <span class="text-base font-bold text-slate-700">Spending</span>
+                    <span class="text-2xl font-bold text-gsm-blue" id="kpi-spending">$0</span>
                 </div>
-                <div class="bg-white p-5 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">篩選臨時授權費</p>
-                    <p class="text-2xl font-bold text-rose-600 mt-1" id="kpi-temp">$1,015,000</p>
+                <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
+                    <span class="text-base font-bold text-slate-700 leading-tight">Temporary<br>License Fee</span>
+                    <span class="text-2xl font-bold text-gsm-blue" id="kpi-temp">$0</span>
                 </div>
             </div>
 
-            <!-- 各供應商費用總覽表格 -->
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
-                    <h3 class="text-lg font-bold text-slate-800" id="table-title">各供應商費用總覽</h3>
-                    <span class="text-xs bg-blue-50 text-blue-700 px-3 py-1 rounded-full font-medium">提示：點選藍色有底線的數值，可穿透展開至二層明細</span>
-                </div>
+            <!-- 總覽表格 -->
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse text-sm">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase select-none">
-                                <th class="py-4 px-6 cursor-pointer hover:bg-slate-200 transition" onclick="window.handleSort('vendor')">
-                                    供應商名稱 <span id="sort-icon-vendor">⇅</span>
+                            <tr class="bg-gsm-teal text-white text-xs font-bold align-bottom">
+                                <th class="py-3 px-4">Vendor</th>
+                                <th class="py-3 px-4">Type</th>
+                                <th class="py-3 px-4 text-right">Demand<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-right">Budget<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-right">Spending<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-center min-w-[190px]">
+                                    Spending vs. Budget
+                                    <div class="flex items-center justify-center gap-3 font-normal text-[10px] mt-1">
+                                        <span class="flex items-center gap-1"><span class="inline-block w-3 h-2 bg-white/70"></span>Actual Spending</span>
+                                        <span class="flex items-center gap-1"><span class="inline-block w-3 border-t-2 border-white"></span>Budget</span>
+                                    </div>
                                 </th>
-                                <th class="py-4 px-6 cursor-pointer hover:bg-slate-200 transition" onclick="window.handleSort('type')">
-                                    類型 <span id="sort-icon-type">⇅</span>
-                                </th>
-                                <th class="py-4 px-6 text-right">需求金額 (Demand)</th>
-                                <th class="py-4 px-6 text-right">預算金額 (Budget)</th>
-                                <th class="py-4 px-6 text-right">實際花費 (Spending)</th>
-                                <th class="py-4 px-6 text-center">採購前置時間風險評分 (Procurement Lead Time Risk Score)</th>
-                                <th class="py-4 px-6 text-center">供應商準時交付率</th>
-                                <th class="py-4 px-6 text-center">Borrow Risk Score</th>
-                                <th class="py-4 px-6 text-right cursor-pointer hover:bg-slate-200 transition" onclick="window.handleSort('temp')">
-                                    臨時授權費用 (Temp License) <span id="sort-icon-temp">⇅</span>
-                                </th>
+                                <th class="py-3 px-4 text-center">Spending vs.<br>Budget (%)</th>
+                                <th class="py-3 px-4 text-center">On-Time PR<br>Rate %</th>
+                                <th class="py-3 px-4 text-center">Supplier On-Time<br>Delivery Rate %</th>
+                                <th class="py-3 px-4 text-center">Add-on<br>Purchase Risk</th>
+                                <th class="py-3 px-4 text-right">Temporary<br>License Fee</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm" id="main-table-body">
-                            <!-- 預載資料 1 (Synopsys Software) -->
-                            <tr class="hover:bg-slate-50/85 transition">
-                                <td class="py-4 px-6 font-semibold text-slate-800">Synopsys</td>
-                                <td class="py-4 px-6"><span class="px-2 py-1 text-xs font-medium rounded bg-indigo-50 text-indigo-700">Software</span></td>
-                                <td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('Synopsys_SW', '需求')">$5,200,000 ↗</td>
-                                <td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('Synopsys_SW', '預算')">$5,000,000 ↗</td>
-                                <td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('Synopsys_SW', '實際花費')">$4,800,000 ↗</td>
-                                <td class="py-4 px-6 text-center text-slate-400">-</td>
-                                <td class="py-4 px-6 text-center text-slate-400">-</td>
-                                <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2A('Synopsys_SW')">
-                                    <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 hover:underline"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>At Risk ↗</span>
-                                </td>
-                                <td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2A('Synopsys_SW')">$450,000 ↗</td>
+                        <tbody class="divide-y divide-slate-200" id="layer3-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-500 mt-3">
+                提示：點擊 <span class="font-semibold text-gsm-blue">Demand / Budget / Spending Amount</span>、
+                <span class="font-semibold text-gsm-blue">On-Time PR Rate / Supplier On-Time Delivery Rate</span>、
+                <span class="font-semibold text-gsm-blue">Add-on Purchase Risk / Temporary License Fee</span> 之數值，可穿透展開至 Layer 4 明細。
+            </p>
+        </div>
+
+        <!-- ==================== Layer 4A：Demand, Budget and Spending ==================== -->
+        <div id="layer4a-dashboard" class="hidden">
+            <div class="flex justify-between items-start mb-4 gap-4">
+                <h2 class="text-xl font-bold text-slate-800">
+                    Demand, Budget and Spending (<span class="year-span"></span>) -
+                    <span id="layer4a-vendor-title" class="text-gsm-blue"></span>
+                </h2>
+                <button class="bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2 rounded transition shrink-0" onclick="window.showLayer3()">
+                    ← Back to Overview
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gsm-teal text-white text-xs font-bold align-bottom">
+                                <th class="py-3 px-4">Contract / Item Name</th>
+                                <th class="py-3 px-4">Period</th>
+                                <th class="py-3 px-4 text-right">Demand<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-right">Budget<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-right">Spending<br>Amount ($)</th>
+                                <th class="py-3 px-4 text-center min-w-[210px]">
+                                    Spending vs. Budget
+                                    <div class="flex items-center justify-center gap-3 font-normal text-[10px] mt-1">
+                                        <span class="flex items-center gap-1"><span class="inline-block w-3 h-2 bg-white/70"></span>Actual Spending</span>
+                                        <span class="flex items-center gap-1"><span class="inline-block w-3 border-t-2 border-white"></span>Budget</span>
+                                    </div>
+                                </th>
+                                <th class="py-3 px-4 text-center">Spending vs.<br>Budget (%)</th>
                             </tr>
-                        </tbody>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200" id="layer4a-table-body"></tbody>
                     </table>
                 </div>
             </div>
         </div>
 
-        <!-- ==================== 第二層儀表板 A：臨時授權費用明細 ==================== -->
-        <div id="level2a-dashboard" class="hidden space-y-6">
-            <div class="flex justify-between items-center">
+        <!-- ==================== Layer 4B：On-Time PR / Supplier On-Time Delivery ==================== -->
+        <div id="layer4b-dashboard" class="hidden">
+            <div class="flex justify-between items-start mb-4 gap-4">
                 <div>
-                    <h2 class="text-2xl font-bold text-slate-800">
-                        臨時授權狀態明細 for major deal + add-on deal <span id="selected-vendor-title-a" class="text-blue-600"></span> (<span class="selected-year-span text-blue-600 font-bold"></span>年度)
-                    </h2>
-                    <div class="flex items-center gap-2 mt-2">
-                        <span class="text-sm font-semibold text-slate-500">此供應商 Borrow Risk Score（與總覽頁一致）：</span>
-                        <span id="level2a-score-badge"></span>
-                    </div>
-
-                    <!-- 判定規則說明：依表格欄位由左至右的順序排列，讓長官能與欄位逐一對照 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-3 text-xs">
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">① Borrow Risk <span class="font-normal text-slate-400">／ 第 1 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed">單一工具的 Borrow Rate % 大於或等於 <span class="font-bold text-rose-600">20%</span> 判定為「<span class="font-bold text-rose-600">At Risk</span>」，代表正式授權相對吃緊；否則為「<span class="font-bold text-emerald-600">Sufficient</span>」。</p>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">② Borrow Rate % <span class="font-normal text-slate-400">／ 第 5 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed">Borrow Rate % ＝ 當年度平均 Temp 數量 ÷ 當年度 Formal 數量 × 100（即第 4 欄 ÷ 第 3 欄）。</p>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">③ Temp license cost $ <span class="font-normal text-slate-400">／ 第 9 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed">該工具當年度臨時授權費用；表格最下方「合計 Σ」為本供應商加總，與總覽頁「臨時授權費用」欄位一致。</p>
-                        </div>
-                    </div>
-
-                    <!-- Borrow Risk Score 評分公式篇幅較長且非每次都需查閱，預設收合，需要時再展開 -->
-                    <details class="mt-2 text-xs text-slate-400">
-                        <summary class="cursor-pointer font-semibold hover:text-slate-600 select-none">Borrow Risk Score（頁首徽章）計算方式 — 點擊展開</summary>
-                        <div class="mt-1.5 leading-relaxed pl-1 space-y-1">
-                            <p>此分數為<span class="font-bold">供應商層級</span>彙總值，與表格內各工具的「Borrow Risk」單筆判定不同，計算步驟如下：</p>
-                            <p class="bg-white border border-slate-200 rounded px-2 py-1.5 font-mono text-slate-600">
-                                Step 1　整體借用率% ＝ Σ(該供應商全部工具 Temp 數量) ÷ Σ(該供應商全部工具 Formal 數量) × 100<br>
-                                Step 2　Borrow Risk Score ＝ MIN(整體借用率%, 100)　※超過100%封頂，避免個案異常值把分數推爆表
-                            </p>
-                            <p>分數 <span class="font-bold text-rose-600">≥ 70</span> 為高風險、<span class="font-bold text-amber-600">40–69</span> 為中風險、<span class="font-bold text-emerald-600">&lt; 40</span> 為低風險。</p>
-                            <p>本評分採<span class="font-bold">絕對刻度</span>：借用率%本身即為 0–100 的比例，不需再與其他供應商相對比較，因此可跨年度、跨供應商直接比較，新增或減少供應商也不會使其他供應商分數變動（與「採購前置時間風險評分」同一套設計原則）。</p>
-                            <p class="text-slate-400">註：Temp license cost 加總不納入評分（避免高單價供應商即使借用率控制得宜仍被判為高風險），改以金額顯示於總覽頁分數下方（「整體借用率X%，加總$Y」），供「分數高 ＋ 金額大」交叉判斷處理順序。</p>
-                        </div>
-                    </details>
+                    <p class="text-base font-bold text-slate-800">
+                        On-Time PR Rate % (<span class="year-span"></span>) - <span id="layer4b-pr-rate" class="text-gsm-blue"></span>
+                    </p>
+                    <p class="text-base font-bold text-slate-800">
+                        Supplier On-Time Delivery Rate % (<span class="year-span"></span>) - <span id="layer4b-delivery-rate" class="text-gsm-blue"></span>
+                    </p>
+                    <p class="text-lg font-bold text-gsm-blue mt-1" id="layer4b-vendor-title"></p>
                 </div>
-                <button class="bg-brand-800 hover:bg-brand-900 text-white text-sm px-4 py-2 rounded-lg transition" onclick="window.showLevel1()">
-                    ← 返回總覽
+                <button class="bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2 rounded transition shrink-0" onclick="window.showLayer3()">
+                    ← Back to Overview
                 </button>
             </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-                    <h3 class="text-sm font-semibold text-slate-600 uppercase">Top 20 臨時授權工具狀態表</h3>
-                </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
                 <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
+                    <table class="w-full text-left border-collapse text-sm">
                         <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
-                                <th class="py-4 px-6 text-center">Borrow Risk</th>
-                                <th class="py-4 px-6">Tool Name</th>
-                                <th class="py-4 px-6 text-center">Formal license quantity</th>
-                                <th class="py-4 px-6 text-center">Average Temp license quantity</th>
-                                <th class="py-4 px-6 text-center">Borrow Rate %</th>
-                                <th class="py-4 px-6 text-center">Borrow Duration (Weeks)</th>
-                                <th class="py-4 px-6 text-center">YTD Formal license P80 U-rate%</th>
-                                <th class="py-4 px-6 text-center">YTD Temp license P80 U-rate%</th>
-                                <th class="py-4 px-6 text-right">Temp license cost $</th>
-                                <th class="py-4 px-6">Category</th>
-                                <th class="py-4 px-6">Function</th>
-                                <th class="py-4 px-6">TML</th>
+                            <tr class="bg-gsm-teal text-white text-xs font-bold align-bottom">
+                                <th class="py-3 px-4">PR status</th>
+                                <th class="py-3 px-4">Product Name</th>
+                                <th class="py-3 px-4 text-right">Spending<br>Amount ($)</th>
+                                <th class="py-3 px-4">PR Requesting<br>Unit</th>
+                                <th class="py-3 px-4">Project Information</th>
+                                <th class="py-3 px-4">TML</th>
+                                <th class="py-3 px-4 text-center">PR Lead Time<br>(&lt; 90 Days)</th>
+                                <th class="py-3 px-4 text-center">PR Lead Time<br>Shortfall (Days)</th>
+                                <th class="py-3 px-4">PR Completion<br>Date</th>
+                                <th class="py-3 px-4">Project Required<br>Date</th>
+                                <th class="py-3 px-4">Supplier Delivery<br>Date</th>
+                                <th class="py-3 px-4">Acceptance<br>Completion Date</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm" id="temp-key-detail-rows"></tbody>
+                        <tbody class="divide-y divide-slate-200" id="layer4b-table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-slate-600 space-y-1">
+                <p>• PR Lead Time = Project Required Date – PR Completion Date.</p>
+                <p>• On-Time PR Rate % = (Number of PRs with PR Lead Time Shortfall (Days) = 0 ÷ Total Number of Completed PRs) × 100</p>
+                <p>• Supplier On-Time Delivery Rate % = (Number of On-Time PRs ÷ Total Number of Completed PRs) × 100</p>
+            </div>
+        </div>
+
+        <!-- ==================== Layer 4C：Temporary License Details ==================== -->
+        <div id="layer4c-dashboard" class="hidden">
+            <div class="flex justify-between items-start mb-4 gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-800">
+                        Temporary License Details for Major Deals and Add-on Deals (<span class="year-span"></span>) -
+                        <span id="layer4c-vendor-title" class="text-gsm-blue"></span>
+                    </h2>
+                    <p class="text-sm text-slate-700 mt-1">
+                        <span class="font-semibold underline">Add-on Purchase Risk Watchlist</span>
+                        <span>— tools meeting at least 2 of 3 risk conditions</span>
+                    </p>
+                </div>
+                <button class="bg-slate-700 hover:bg-slate-800 text-white text-sm px-4 py-2 rounded transition shrink-0" onclick="window.showLayer3()">
+                    ← Back to Overview
+                </button>
+            </div>
+
+            <div class="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse text-sm">
+                        <thead>
+                            <tr class="bg-gsm-teal text-white text-xs font-bold align-bottom">
+                                <th class="py-3 px-4 text-center">Add-on<br>Purchase Risk</th>
+                                <th class="py-3 px-4">Tool Name</th>
+                                <th class="py-3 px-4 text-center">Borrow<br>Duration<br>Ratio %</th>
+                                <th class="py-3 px-4 text-center">YTD Formal<br>License P95<br>U-rate% ≥ 70%</th>
+                                <th class="py-3 px-4 text-center">YTD Temp<br>License P95<br>U-rate% ≥ 70%</th>
+                                <th class="py-3 px-4 text-center">Formal<br>License Qty</th>
+                                <th class="py-3 px-4 text-center">Avg. Temp<br>License Qty</th>
+                                <th class="py-3 px-4 text-right">LAN ($)</th>
+                                <th class="py-3 px-4 text-right">WAN ($)</th>
+                                <th class="py-3 px-4">Category</th>
+                                <th class="py-3 px-4">Function</th>
+                                <th class="py-3 px-4">TML</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-200" id="layer4c-table-body"></tbody>
                         <tfoot>
-                            <tr class="bg-slate-50 border-t-2 border-slate-200 text-sm font-bold text-slate-700">
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6">合計 Σ</td>
-                                <td class="py-3 px-6 text-center font-mono" id="temp-key-footer-formal">-</td>
-                                <td class="py-3 px-6 text-center font-mono" id="temp-key-footer-temp">-</td>
-                                <td class="py-3 px-6 text-center font-mono" id="temp-key-footer-rate">-</td>
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6 text-right font-mono" id="temp-key-footer-cost">-</td>
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6"></td>
-                                <td class="py-3 px-6"></td>
+                            <tr class="bg-slate-50 border-t-2 border-slate-300 text-sm font-bold text-slate-700">
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4">Total Σ</td>
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4 text-center font-mono" id="layer4c-total-formal">-</td>
+                                <td class="py-3 px-4 text-center font-mono" id="layer4c-total-temp">-</td>
+                                <td class="py-3 px-4 text-right font-mono" id="layer4c-total-lan">-</td>
+                                <td class="py-3 px-4 text-right font-mono" id="layer4c-total-wan">-</td>
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4"></td>
+                                <td class="py-3 px-4"></td>
                             </tr>
                         </tfoot>
                     </table>
                 </div>
             </div>
-        </div>
 
-        <!-- ==================== 第二層儀表板 B：非計畫性採購資訊 ==================== -->
-        <div id="level2b-dashboard" class="hidden space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">非計畫性採購追蹤資訊 <span id="selected-vendor-title-b" class="text-rose-600"></span> (<span class="selected-year-span text-rose-600 font-bold"></span>年度)</h2>
-                </div>
-                <button class="bg-brand-800 hover:bg-brand-900 text-white text-sm px-4 py-2 rounded-lg transition" onclick="window.showLevel1()">
-                    ← 返回總覽
-                </button>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
-                                <th class="py-4 px-6">供應商名稱</th>
-                                <th class="py-4 px-6">申請單位 (BU/FU)</th>
-                                <th class="py-4 px-6">專案 / 技術世代資訊</th>
-                                <th class="py-4 px-6 text-center">採購 Lead Time (天數)</th>
-                                <th class="py-4 px-6">收到需求日期</th>
-                                <th class="py-4 px-6">期望交付日期</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm" id="non-planned-rows"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== 第二層儀表板 C：預算與花費項目拆解 ==================== -->
-        <div id="level2c-dashboard" class="hidden space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">預算與花費細項拆解 <span id="selected-vendor-title-c" class="text-blue-600"></span> (<span class="selected-year-span text-blue-600 font-bold"></span>年度)</h2>
-                </div>
-                <button class="bg-brand-800 hover:bg-brand-900 text-white text-sm px-4 py-2 rounded-lg transition" onclick="window.showLevel1()">
-                    ← 返回總覽
-                </button>
-            </div>
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
-                                <th class="py-4 px-6">Deal Period</th>
-                                <th class="py-4 px-6">採購項目 / 合約名稱</th>
-                                <th class="py-4 px-6">PR#</th>
-                                <th class="py-4 px-6 text-right">細項需求金額 (Demand)</th>
-                                <th class="py-4 px-6 text-right">細項預算金額 (Budget)</th>
-                                <th class="py-4 px-6 text-right">細項實際花費 (Spending)</th>
-                                <th class="py-4 px-6 text-center">預算執行率</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm" id="spend-detail-rows"></tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
-        <!-- ==================== 第二層儀表板 D：採購前置時間風險追蹤資訊 ==================== -->
-        <div id="level2d-dashboard" class="hidden space-y-6">
-            <div class="flex justify-between items-center">
-                <div>
-                    <h2 class="text-2xl font-bold text-slate-800">採購前置時間風險追蹤資訊 <span id="selected-vendor-title-d" class="text-rose-600"></span><span id="level2d-type-label" class="text-slate-500 font-semibold"></span> (<span class="selected-year-span text-rose-600 font-bold"></span>年度)</h2>
-                    <div class="flex items-center gap-4 mt-2 flex-wrap">
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-slate-500">此供應商採購前置時間風險評分（與總覽頁一致）：</span>
-                            <span id="level2d-score-badge"></span>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm font-semibold text-slate-500">供應商準時交付率（與總覽頁一致）：</span>
-                            <span id="level2d-ontime-badge"></span>
-                        </div>
-                    </div>
-                    <!-- 判定規則說明：依表格欄位由左至右的順序排列，讓長官能與欄位逐一對照 -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-2 mt-3 text-xs">
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">① 採購前置時間風險 <span class="font-normal text-slate-400">／ 第 1 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed" id="level2d-lead-time-desc">採購 Lead Time 小於 <span class="font-bold text-rose-600">90 天</span> 判定為「<span class="font-bold text-rose-600">At Risk</span>」，代表下單時預留的準備時間不足；否則為「<span class="font-bold text-emerald-600">On Track</span>」。</p>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">② 採購 Lead Time <span class="font-normal text-slate-400">／ 第 5 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed">Lead Time ＝ 專案需求日期 － 確認採購需求日期。小字副標「不足 X 天」＝ 門檻天數 － Lead Time（未達門檻才顯示）。</p>
-                        </div>
-                        <div class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-2">
-                            <p class="font-bold text-slate-700">③ 驗收完成日期 <span class="font-normal text-slate-400">／ 第 8 欄</span></p>
-                            <p class="text-slate-500 mt-1 leading-relaxed">驗收日 ≤ 專案需求日期 →「<span class="font-bold text-emerald-600">準時交付</span>」；驗收日 &gt; 專案需求日期 →「<span class="font-bold text-rose-600">實際 delay 天數</span>」。<span class="text-slate-400">與 ① 量測不同：① 看排程是否寬鬆，③ 看實際是否準時。</span></p>
-                        </div>
-                    </div>
-
-                    <!-- 現象組合標籤四象限對照表：比條列句子更容易一眼看懂哪個組合對應哪個標籤 -->
-                    <div class="border border-slate-200 rounded-lg overflow-hidden mt-2 text-xs">
-                        <p class="bg-slate-50 border-b border-slate-200 px-3 py-1.5 font-bold text-slate-700">現象組合標籤對照 <span class="font-normal text-slate-400">／ 標示於第 1 欄燈號下方，僅已完成訂單</span></p>
-                        <div class="grid grid-cols-2 md:grid-cols-4 divide-y md:divide-y-0 md:divide-x divide-slate-200">
-                            <div class="px-3 py-2">
-                                <p class="text-slate-400">On Track ＋ 準時交付</p>
-                                <p class="font-bold text-slate-400 mt-0.5">正常（不加註）</p>
-                            </div>
-                            <div class="px-3 py-2">
-                                <p class="text-slate-400">At Risk ＋ 準時交付</p>
-                                <p class="font-bold text-amber-600 mt-0.5">時程緊湊仍達標</p>
-                            </div>
-                            <div class="px-3 py-2">
-                                <p class="text-slate-400">On Track ＋ 驗收落後</p>
-                                <p class="font-bold text-rose-600 mt-0.5">驗收落後（原時程充裕）</p>
-                            </div>
-                            <div class="px-3 py-2">
-                                <p class="text-slate-400">At Risk ＋ 驗收落後</p>
-                                <p class="font-bold text-rose-700 mt-0.5">時程緊湊且落後</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <p class="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mt-2">
-                        <span class="font-bold">判讀但書：</span>上述標籤僅描述資料觀察到的<span class="font-bold">現象組合</span>，用於提示何者需進一步確認，<span class="font-bold">並非自動歸責</span>。驗收落後的實際原因可能為供應商交貨延遲、我方內部驗收流程排隊、或專案需求日期中途異動；且部分客製化硬體（如 Emulator 系統）之合理前置期本就超過 90 天門檻，未必代表流程異常。實際責任歸屬仍須人工查核後認定。
-                    </p>
-
-                    <!-- SAW 評分公式最少被閱讀、篇幅最長，改為預設收合，需要時才展開，避免佔用表頭視覺空間 -->
-                    <details class="mt-2 text-xs text-slate-400">
-                        <summary class="cursor-pointer font-semibold hover:text-slate-600 select-none">採購前置時間風險評分（頁首徽章）計算方式 — 點擊展開</summary>
-                        <p class="mt-1.5 leading-relaxed pl-1">
-                            由<span class="font-bold">頻率</span>與<span class="font-bold">嚴重度</span>各佔 50% 加權平均：<br>
-                            ・頻率得分 ＝ At Risk 比率%（已完成訂單中 At Risk 筆數 ÷ 已完成訂單總數），本身即為 0–100<br>
-                            ・嚴重度得分 ＝ 平均前置時間不足天數 ÷ 門檻天數 × 100（不足天數達滿門檻代表完全沒給前置時間），超過則封頂 100<br>
-                            分數 <span class="font-bold text-rose-600">≥ 70</span> 為高風險、<span class="font-bold text-amber-600">40–69</span> 為中風險、<span class="font-bold text-emerald-600">&lt; 40</span> 為低風險。<br>
-                            本評分採<span class="font-bold">絕對刻度</span>，不與其他供應商相對比較，因此可跨年度、跨供應商比較，新增或減少供應商也不會使其他供應商分數變動。「進行中」訂單不計入計算，避免尚未完成的訂單造成誤判。<br>
-                            <span class="text-slate-400">註：訂單金額不納入評分（避免高單價供應商即使流程良好仍被判為高風險），改以「At Risk 金額」顯示於總覽頁分數下方，供「分數高 ＋ 金額大」交叉判斷處理順序。</span>
-                        </p>
-                    </details>
-                </div>
-                <button class="bg-brand-800 hover:bg-brand-900 text-white text-sm px-4 py-2 rounded-lg transition" onclick="window.showLevel1()">
-                    ← 返回總覽
-                </button>
-            </div>
-
-            <!-- 進行中訂單即時預警：不影響上方 SAW 分數，僅提示管理者留意尚未完成但已顯露風險跡象的訂單 -->
-            <div id="level2d-inprogress-warning" class="hidden bg-amber-50 border border-amber-200 text-amber-800 text-sm font-semibold rounded-lg px-4 py-3">
-                ⚠️ <span id="level2d-inprogress-warning-text"></span>
-            </div>
-
-            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-                <div class="overflow-x-auto">
-                    <table class="w-full text-left border-collapse">
-                        <thead>
-                            <tr class="bg-slate-100 text-slate-600 text-xs font-semibold uppercase">
-                                <th class="py-4 px-6 text-center">採購前置時間風險</th>
-                                <th class="py-4 px-6 text-center">訂單狀態</th>
-                                <th class="py-4 px-6">採購項目</th>
-                                <th class="py-4 px-6 text-right">訂單金額 (Order Amount)</th>
-                                <th class="py-4 px-6 text-center">採購 Lead Time (天數)</th>
-                                <th class="py-4 px-6">確認採購需求日期</th>
-                                <th class="py-4 px-6">專案需求日期</th>
-                                <th class="py-4 px-6">驗收完成日期</th>
-                                <th class="py-4 px-6">專案資訊</th>
-                                <th class="py-4 px-6">申請單位 (BU)</th>
-                                <th class="py-4 px-6">TML</th>
-                                <th class="py-4 px-6">PR#</th>
-                            </tr>
-                        </thead>
-                        <tbody class="divide-y divide-slate-100 text-sm" id="risk-detail-rows"></tbody>
-                    </table>
-                </div>
-            </div>
-
-            <!-- 頁尾彙總卡：總訂單數 / At Risk 筆數與比率 / At Risk 總金額 / 平均前置時間不足天數 —— 供第一層分數交叉核對 -->
-            <div class="grid grid-cols-1 md:grid-cols-4 gap-4" id="level2d-summary-cards">
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">總訂單數 (已完成)</p>
-                    <p class="text-xl font-bold text-slate-800 mt-1" id="level2d-total-orders">-</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">At Risk 筆數與比率（已完成訂單）</p>
-                    <p class="text-xl font-bold text-rose-600 mt-1" id="level2d-atrisk-count">-</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">At Risk 總金額（已完成訂單）</p>
-                    <p class="text-xl font-bold text-slate-800 mt-1" id="level2d-atrisk-amount">-</p>
-                </div>
-                <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200">
-                    <p class="text-xs font-semibold text-slate-400 uppercase">平均前置時間不足天數（已完成訂單）</p>
-                    <p class="text-xl font-bold text-slate-800 mt-1" id="level2d-avg-overdue">-</p>
-                </div>
+            <div class="mt-4 text-xs text-slate-600 space-y-1">
+                <p><span class="font-bold">At Risk:</span> all 3 conditions met.</p>
+                <p><span class="font-bold">Watchlist:</span> any 2 of 3 conditions met.</p>
+                <p class="pl-4">1. Borrow Duration Ratio % = (Borrow Duration in weeks ÷ 52 weeks) × 100 ≥ 30%</p>
+                <p class="pl-4">2. YTD Formal License P95 U-rate% ≥ 70%</p>
+                <p class="pl-4">3. YTD Temp License P95 U-rate% ≥ 70%</p>
             </div>
         </div>
 
     </div>
 
-    <!-- ==================== JavaScript 時空聯動資料庫 ==================== -->
     <script>
-        const VENDOR_ALERT_THRESHOLD = 200000; 
-        const TOOL_ALERT_THRESHOLD = 80000;    
-
-        // 高相容性時間計算公式
+        // ==================== 共用工具函式 ====================
         function getDaysDiff(dateStr1, dateStr2) {
             if (!dateStr1 || !dateStr2) return 0;
-            const d1 = new Date(dateStr1);
-            const d2 = new Date(dateStr2);
-            const t1 = d1.getTime();
-            const t2 = d2.getTime();
-            if (isNaN(t1) || isNaN(t2)) return 0; 
-            const diffTime = Math.abs(t2 - t1);
-            return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            var d1 = new Date(dateStr1);
+            var d2 = new Date(dateStr2);
+            var t1 = d1.getTime(), t2 = d2.getTime();
+            if (isNaN(t1) || isNaN(t2)) return 0;
+            return Math.round((t2 - t1) / (1000 * 60 * 60 * 24));
         }
 
-        // 採購前置時間風險門檻：僅硬體類型適用，門檻為 90 天（小於 90 天視為 At Risk，準備時間不足）
-        function getLeadTimeThreshold(type) {
-            return 90;
-        }
+        function money(n) { return '$' + (n || 0).toLocaleString(); }
 
-        // 類型中文字樣：軟體 / 硬體 / 維護
-        function getTypeLabelZh(type) {
-            if (type === 'Hardware') return '硬體';
-            if (type === 'Hardware Maintenance') return '維護';
-            return '軟體';
-        }
+        // PR Lead Time 門檻：小於 90 天代表下單時預留的準備時間不足
+        var PR_LEAD_TIME_THRESHOLD = 90;
+        // Add-on Purchase Risk 三項條件門檻
+        var BORROW_DURATION_RATIO_THRESHOLD = 30;
+        var P95_URATE_THRESHOLD = 70;
 
-        // ==================== 全方位時空資料庫 ====================
-        const yearlyData = {
+        // ==================== 資料庫 ====================
+        var yearlyData = {
             "2026": {
                 vendors: [
-                    { id: "Synopsys_SW", vendor: "Synopsys", type: "Software", budget: 5000000, demand: 5200000, spending: 4800000, temp: 450000 },
-                    { id: "Synopsys_HW", vendor: "Synopsys", type: "Hardware", budget: 1000000, demand: 1000000, spending: 950000, temp: 0 },
-                    { id: "Synopsys_Maint", vendor: "Synopsys", type: "Hardware Maintenance", budget: 500000, demand: 500000, spending: 480000, temp: 0 }, 
-                    { id: "Cadence_SW", vendor: "Cadence", type: "Software", budget: 4500000, demand: 4600000, spending: 4400000, temp: 320000 },
-                    { id: "Cadence_HW", vendor: "Cadence", type: "Hardware", budget: 150000, demand: 400000, spending: 380000, temp: 0 }, 
-                    { id: "Siemens_SW", vendor: "Siemens EDA", type: "Software", budget: 2000000, demand: 2100000, spending: 1950000, temp: 150000 },
-                    { id: "Ansys_SW", vendor: "Ansys", type: "Software", budget: 800000, demand: 900000, spending: 860000, temp: 95000 },
-                    { id: "Keysight_SW", vendor: "Keysight", type: "Software", budget: 100000, demand: 120000, spending: 110000, temp: 0 }
+                    { id: "Synopsys_SW",    vendor: "Synopsys",    type: "Software",             demand: 5200000, budget: 5000000, spending: 4800000, temp: 450000 },
+                    { id: "Synopsys_HW",    vendor: "Synopsys",    type: "Hardware",             demand: 1000000, budget: 1000000, spending: 950000,  temp: 0 },
+                    { id: "Synopsys_Maint", vendor: "Synopsys",    type: "Hardware Maintenance", demand: 500000,  budget: 500000,  spending: 480000,  temp: 0 },
+                    { id: "Cadence_SW",     vendor: "Cadence",     type: "Software",             demand: 4600000, budget: 4500000, spending: 4400000, temp: 320000 },
+                    { id: "Cadence_HW",     vendor: "Cadence",     type: "Hardware",             demand: 400000,  budget: 150000,  spending: 380000,  temp: 0 },
+                    { id: "Siemens_SW",     vendor: "Siemens EDA", type: "Software",             demand: 2100000, budget: 2000000, spending: 1950000, temp: 150000 },
+                    { id: "Ansys_SW",       vendor: "Ansys",       type: "Software",             demand: 900000,  budget: 800000,  spending: 860000,  temp: 95000 },
+                    { id: "Keysight_SW",    vendor: "Keysight",    type: "Software",             demand: 120000,  budget: 100000,  spending: 110000,  temp: 0 }
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra", formalQty: 100, tempQty: 25, borrowDuration: 45, formalP80Rate: 95, tempP80Rate: 88, category: "Verification", function: "Simulation", tml: "CW Ko", cost: 180000 },
-                        { tool: "PrimeTime PX Signoff", formalQty: 80, tempQty: 18, borrowDuration: 30, formalP80Rate: 72, tempP80Rate: 82, category: "Signoff", function: "Timing Analysis", tml: "CC Mao", cost: 110000 },
-                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 15, borrowDuration: 60, formalP80Rate: 80, tempP80Rate: 70, category: "Synthesis", function: "Logic Synthesis", tml: "CM Chen", cost: 90000 },
-                        { tool: "IC Compiler II", formalQty: 60, tempQty: 5, borrowDuration: 15, formalP80Rate: 75, tempP80Rate: 60, category: "Implementation", function: "Place & Route", tml: "George Chien", cost: 50000 },
-                        { tool: "StarRC Extraction", formalQty: 120, tempQty: 6, borrowDuration: 20, formalP80Rate: 68, tempP80Rate: 55, category: "Signoff", function: "Parasitic Extraction", tml: "CW Ko", cost: 20000 }
+                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 25, borrowWeeks: 26,   formalP95: 95, tempP95: 88, lan: 120000, wan: 60000, category: "Verification",   func: "Simulation",           tml: "CW Ko" },
+                        { tool: "PrimeTime PX Signoff",      formalQty: 80,  tempQty: 18, borrowWeeks: 23.4, formalP95: 92, tempP95: 82, lan: 70000,  wan: 40000, category: "Signoff",        func: "Timing Analysis",      tml: "CC Mao" },
+                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 15, borrowWeeks: 18.7, formalP95: 80, tempP95: 65, lan: 60000,  wan: 30000, category: "Synthesis",      func: "Logic Synthesis",      tml: "CM Chen" },
+                        { tool: "IC Compiler II",            formalQty: 60,  tempQty: 5,  borrowWeeks: 16.1, formalP95: 75, tempP95: 60, lan: 35000,  wan: 15000, category: "Implementation", func: "Place & Route",        tml: "George Chien" },
+                        { tool: "StarRC Extraction",         formalQty: 120, tempQty: 6,  borrowWeeks: 5.2,  formalP95: 72, tempP95: 75, lan: 15000,  wan: 5000,  category: "Signoff",        func: "Parasitic Extraction", tml: "CW Ko" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50, tempQty: 12, borrowDuration: 40, formalP80Rate: 84, tempP80Rate: 80, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 150000 },
-                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 12, borrowDuration: 30, formalP80Rate: 85, tempP80Rate: 75, category: "Implementation", function: "Place & Route", tml: "CM Chen", cost: 100000 },
-                        { tool: "Spectre APS Simulator", formalQty: 200, tempQty: 10, borrowDuration: 45, formalP80Rate: 70, tempP80Rate: 65, category: "Verification", function: "Circuit Simulation", tml: "CC Mao", cost: 50000 },
-                        { tool: "Tempus Timing Signoff", formalQty: 80, tempQty: 4, borrowDuration: 15, formalP80Rate: 65, tempP80Rate: 50, category: "Signoff", function: "Timing Analysis", tml: "CW Ko", cost: 20000 }
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 26,   formalP95: 90, tempP95: 80, lan: 100000, wan: 50000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 12, borrowWeeks: 18.2, formalP95: 85, tempP95: 75, lan: 70000,  wan: 30000, category: "Implementation", func: "Place & Route",         tml: "CM Chen" },
+                        { tool: "Spectre APS Simulator",         formalQty: 200, tempQty: 10, borrowWeeks: 10.4, formalP95: 70, tempP95: 65, lan: 35000,  wan: 15000, category: "Verification",   func: "Circuit Simulation",    tml: "CC Mao" },
+                        { tool: "Tempus Timing Signoff",         formalQty: 80,  tempQty: 4,  borrowWeeks: 7.8,  formalP95: 65, tempP95: 50, lan: 15000,  wan: 5000,  category: "Signoff",        func: "Timing Analysis",       tml: "CW Ko" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 15, borrowDuration: 45, formalP80Rate: 88, tempP80Rate: 78, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 90000 },
-                        { tool: "Tessent SiliconTest", formalQty: 80, tempQty: 12, borrowDuration: 30, formalP80Rate: 90, tempP80Rate: 80, category: "DFT", function: "Silicon Test", tml: "CW Ko", cost: 40000 },
-                        { tool: "Questa Advanced Simulator", formalQty: 120, tempQty: 8, borrowDuration: 25, formalP80Rate: 72, tempP80Rate: 62, category: "Verification", function: "Logic Verification", tml: "CC Mao", cost: 20000 }
+                        { tool: "Calibre nmDRC/LVS",         formalQty: 150, tempQty: 15, borrowWeeks: 20.8, formalP95: 88, tempP95: 65, lan: 60000, wan: 30000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Tessent SiliconTest",       formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 90, tempP95: 60, lan: 30000, wan: 10000, category: "DFT",          func: "Silicon Test",          tml: "CW Ko" },
+                        { tool: "Questa Advanced Simulator", formalQty: 120, tempQty: 8,  borrowWeeks: 10.4, formalP95: 72, tempP95: 62, lan: 15000, wan: 5000,  category: "Verification", func: "Logic Verification",    tml: "CC Mao" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 8, borrowDuration: 60, formalP80Rate: 85, tempP80Rate: 75, category: "Signoff", function: "Power Integrity", tml: "CM Chen", cost: 65000 },
-                        { tool: "Totem-SC Mixed-Signal Power", formalQty: 100, tempQty: 5, borrowDuration: 30, formalP80Rate: 70, tempP80Rate: 60, category: "Signoff", function: "Mixed-Signal Power", tml: "CM Chen", cost: 30000 }
+                        { tool: "RedHawk-SC Power Integrity",  formalQty: 80,  tempQty: 8, borrowWeeks: 20.8, formalP95: 85, tempP95: 65, lan: 45000, wan: 20000, category: "Signoff", func: "Power Integrity",    tml: "CM Chen" },
+                        { tool: "Totem-SC Mixed-Signal Power", formalQty: 100, tempQty: 5, borrowWeeks: 10.4, formalP95: 70, tempP95: 60, lan: 20000, wan: 10000, category: "Signoff", func: "Mixed-Signal Power", tml: "CM Chen" }
                     ],
-                    "Synopsys_HW": [],
-                    "Synopsys_Maint": [],
-                    "Cadence_HW": [],
-                    "Keysight_SW": []
+                    "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
-                fulfillmentRisk: {
+                prTracking: {
                     "Synopsys_HW": [
-                        { pr: "PR-2026-015", product: "HPC Processing Server Rack", bu: "CPU Design BU", tml: "CW Ko", project: "N3P Alpha Project", confirmDate: "2026/01/10", targetDate: "2026/03/20", verifyDate: "2026/03/18", orderAmount: 600000, status: "已完成" },
-                        { pr: "PR-2026-016", product: "In-Circuit Emulator Box", bu: "GPU Verification BU", tml: "CC Mao", project: "N2 Ultra Project", confirmDate: "2026/02/01", targetDate: "2026/05/10", verifyDate: "2026/05/15", orderAmount: 400000, status: "已完成" },
-                        { pr: "PR-2026-017", product: "GPU Compute Expansion Rack (驗收中)", bu: "GPU Verification BU", tml: "CC Mao", project: "N2 Ultra Project", confirmDate: "2026/05/01", targetDate: "2026/07/15", verifyDate: null, orderAmount: 350000, status: "進行中" }
+                        { status: "Completed",   product: "HPC Processing Server Rack", spending: 600000, bu: "GPU Verification BU", project: "N3P Alpha Project", tml: "CC Mao", prCompletionDate: "2026/02/01", projectRequiredDate: "2026/03/15", supplierDeliveryDate: "2026/03/14", acceptanceDate: "2026/03/18" },
+                        { status: "In Progress", product: "GPU Compute Expansion Rack", spending: 400000, bu: "CPU Design BU",       project: "N2 Ultra Project",  tml: "CW Ko",  prCompletionDate: "2025/12/15", projectRequiredDate: "2026/03/20", supplierDeliveryDate: "2026/03/21", acceptanceDate: null }
                     ],
-                    "Cadence_HW": [
-                        { pr: "PR-2026-018", product: "Palladium Z2 Emulator Chassis", bu: "AI Compute Platform BU", tml: "George Chien", project: "Tensor Gen2 Project", confirmDate: "2026/02/12", targetDate: "2026/02/24", verifyDate: "2026/02/20", orderAmount: 250000, status: "已完成" },
-                        { pr: "PR-2026-019", product: "Protium S1 Hardware System", bu: "AI Compute Platform BU", tml: "CM Chen", project: "Project Thor", confirmDate: "2026/01/10", targetDate: "2026/04/20", verifyDate: "2026/04/25", orderAmount: 150000, status: "已完成" }
-                    ]
+                    "Cadence_HW": []
                 },
                 spendBreakdown: {
                     "Synopsys_SW": [
-                        { pr: "PR-2026-001", dealStart: "2026/01/01", dealEnd: "2026/03/31", item: "TLA Core IP Renewal", budget: 3000000, demand: 3000000, spending: 2900000 },
-                        { pr: "PR-2026-002", dealStart: "2026/04/01", dealEnd: "2026/06/30", item: "AI-Driven Compiler Add-on", budget: 1200000, demand: 1300000, spending: 1200000 },
-                        { pr: "PR-2026-003", dealStart: "2026/07/01", dealEnd: "2026/09/30", item: "Fusion Design Platform Upgrade", budget: 800000, demand: 900000, spending: 700000 }
+                        { item: "TLA Core IP Renewal",            period: "2026/1/1-2026/12/31", demand: 3000000, budget: 3000000, spending: 2900000 },
+                        { item: "AI-Driven Compiler Add-on",      period: "2026/1/1-2026/12/31", demand: 1300000, budget: 1200000, spending: 1200000 },
+                        { item: "Fusion Design Platform Upgrade", period: "2026/1/1-2026/12/31", demand: 900000,  budget: 800000,  spending: 700000 }
                     ],
                     "Synopsys_HW": [
-                        { pr: "PR-2026-004", dealStart: "2026/01/20", dealEnd: null, item: "HPC Processing Server Nodes for Simulation Farm", budget: 1000000, demand: 1000000, spending: 950000 }
+                        { item: "HPC Processing Server Nodes", period: "2026/1/20-2026/12/31", demand: 600000, budget: 600000, spending: 570000 },
+                        { item: "GPU Compute Expansion Rack",  period: "2026/1/10-2026/12/31", demand: 400000, budget: 400000, spending: 380000 }
                     ],
                     "Synopsys_Maint": [
-                        { pr: "PR-2026-005", dealStart: "2026/01/01", dealEnd: "2026/12/31", item: "Synopsys Hardware Maintenance Contract", budget: 500000, demand: 500000, spending: 480000 }
+                        { item: "Synopsys Hardware Maintenance Contract", period: "2026/1/1-2026/12/31", demand: 500000, budget: 500000, spending: 480000 }
                     ],
                     "Cadence_SW": [
-                        { pr: "PR-2026-006", dealStart: "2026/01/01", dealEnd: "2026/03/31", item: "Digital Design Platform Subscription", budget: 2500000, demand: 2500000, spending: 2450000 },
-                        { pr: "PR-2026-007", dealStart: "2026/04/01", dealEnd: "2026/06/30", item: "Spectre Verification Suite Expansion", budget: 1200000, demand: 1300000, spending: 1200000 },
-                        { pr: "PR-2026-008", dealStart: "2026/07/01", dealEnd: "2026/09/30", item: "Cerebrus AI Optimization Tool Suite", budget: 800000, demand: 800000, spending: 750000 }
+                        { item: "Digital Design Platform Subscription", period: "2026/1/1-2026/12/31", demand: 2500000, budget: 2500000, spending: 2450000 },
+                        { item: "Spectre Verification Suite Expansion", period: "2026/1/1-2026/12/31", demand: 1300000, budget: 1200000, spending: 1200000 },
+                        { item: "Cerebrus AI Optimization Tool Suite",  period: "2026/1/1-2026/12/31", demand: 800000,  budget: 800000,  spending: 750000 }
                     ],
                     "Cadence_HW": [
-                        { pr: "PR-2026-009", dealStart: "2026/02/15", dealEnd: null, item: "Palladium Emulation System Expansion", budget: 100000, demand: 250000, spending: 240000 },
-                        { pr: "PR-2026-010", dealStart: "2026/08/10", dealEnd: null, item: "Protium S1 Hardware Core Integration", budget: 50000, demand: 150000, spending: 140000 }
+                        { item: "Palladium Emulation System Expansion", period: "2026/2/15-2026/12/31", demand: 250000, budget: 100000, spending: 240000 },
+                        { item: "Protium S1 Hardware Core Integration", period: "2026/8/10-2026/12/31", demand: 150000, budget: 50000,  spending: 140000 }
                     ],
                     "Siemens_SW": [
-                        { pr: "PR-2026-011", dealStart: "2026/01/01", dealEnd: "2026/06/30", item: "Calibre Physical Verification Maintenance", budget: 1500000, demand: 1500000, spending: 1450000 },
-                        { pr: "PR-2026-012", dealStart: "2026/07/01", dealEnd: "2026/12/31", item: "Tessent Test Suite Floating Licenses", budget: 500000, demand: 600000, spending: 500000 }
+                        { item: "Calibre Physical Verification Maintenance", period: "2026/1/1-2026/6/30",  demand: 1500000, budget: 1500000, spending: 1450000 },
+                        { item: "Tessent Test Suite Floating Licenses",      period: "2026/7/1-2026/12/31", demand: 600000,  budget: 500000,  spending: 500000 }
                     ],
                     "Ansys_SW": [
-                        { pr: "PR-2026-013", dealStart: "2026/01/01", dealEnd: "2026/12/31", item: "RedHawk-SC Power Integrity Licenses", budget: 800000, demand: 900000, spending: 860000 }
+                        { item: "RedHawk-SC Power Integrity Licenses", period: "2026/1/1-2026/12/31", demand: 900000, budget: 800000, spending: 860000 }
                     ],
                     "Keysight_SW": [
-                        { pr: "PR-2026-014", dealStart: "2026/01/20", dealEnd: "2026/03/31", item: "High-Freq Analyzer Calibration Maintenance", budget: 100000, demand: 120000, spending: 110000 }
+                        { item: "High-Freq Analyzer Calibration Maintenance", period: "2026/1/20-2026/3/31", demand: 120000, budget: 100000, spending: 110000 }
                     ]
                 }
             },
             "2027": {
                 vendors: [
-                    { id: "Synopsys_SW", vendor: "Synopsys", type: "Software", budget: 5200000, demand: 5400000, spending: 5100000, temp: 180000 },
-                    { id: "Synopsys_HW", vendor: "Synopsys", type: "Hardware", budget: 1100000, demand: 1100000, spending: 1050000, temp: 0 },
-                    { id: "Synopsys_Maint", vendor: "Synopsys", type: "Hardware Maintenance", budget: 550000, demand: 550000, spending: 530000, temp: 0 }, 
-                    { id: "Cadence_SW", vendor: "Cadence", type: "Software", budget: 4800000, demand: 4900000, spending: 4700000, temp: 150000 },
-                    { id: "Cadence_HW", vendor: "Cadence", type: "Hardware", budget: 200000, demand: 350000, spending: 340000, temp: 0 }, 
-                    { id: "Siemens_SW", vendor: "Siemens EDA", type: "Software", budget: 2200000, demand: 2250000, spending: 2150000, temp: 50000 },
-                    { id: "Ansys_SW", vendor: "Ansys", type: "Software", budget: 900000, demand: 950000, spending: 920000, temp: 35000 },
-                    { id: "Keysight_SW", vendor: "Keysight", type: "Software", budget: 120000, demand: 130000, spending: 120000, temp: 0 }
+                    { id: "Synopsys_SW",    vendor: "Synopsys",    type: "Software",             demand: 5400000, budget: 5200000, spending: 5100000, temp: 180000 },
+                    { id: "Synopsys_HW",    vendor: "Synopsys",    type: "Hardware",             demand: 1100000, budget: 1100000, spending: 1050000, temp: 0 },
+                    { id: "Synopsys_Maint", vendor: "Synopsys",    type: "Hardware Maintenance", demand: 550000,  budget: 550000,  spending: 530000,  temp: 0 },
+                    { id: "Cadence_SW",     vendor: "Cadence",     type: "Software",             demand: 4900000, budget: 4800000, spending: 4700000, temp: 150000 },
+                    { id: "Cadence_HW",     vendor: "Cadence",     type: "Hardware",             demand: 350000,  budget: 200000,  spending: 340000,  temp: 0 },
+                    { id: "Siemens_SW",     vendor: "Siemens EDA", type: "Software",             demand: 2250000, budget: 2200000, spending: 2150000, temp: 50000 },
+                    { id: "Ansys_SW",       vendor: "Ansys",       type: "Software",             demand: 950000,  budget: 900000,  spending: 920000,  temp: 35000 },
+                    { id: "Keysight_SW",    vendor: "Keysight",    type: "Software",             demand: 130000,  budget: 120000,  spending: 120000,  temp: 0 }
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra", formalQty: 100, tempQty: 15, borrowDuration: 45, formalP80Rate: 95, tempP80Rate: 88, category: "Verification", function: "Simulation", tml: "CW Ko", cost: 100000 },
-                        { tool: "PrimeTime PX Signoff", formalQty: 80, tempQty: 12, borrowDuration: 30, formalP80Rate: 92, tempP80Rate: 82, category: "Signoff", function: "Timing Analysis", tml: "CC Mao", cost: 50000 },
-                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 10, borrowDuration: 60, formalP80Rate: 80, tempP80Rate: 70, category: "Synthesis", function: "Logic Synthesis", tml: "CM Chen", cost: 30000 }
+                        { tool: "VCS Simulator Ultra",       formalQty: 100, tempQty: 15, borrowWeeks: 20.8, formalP95: 95, tempP95: 82, lan: 60000, wan: 40000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
+                        { tool: "PrimeTime PX Signoff",      formalQty: 80,  tempQty: 12, borrowWeeks: 15.6, formalP95: 92, tempP95: 66, lan: 30000, wan: 20000, category: "Signoff",      func: "Timing Analysis", tml: "CC Mao" },
+                        { tool: "Design Compiler Graphical", formalQty: 150, tempQty: 10, borrowWeeks: 10.4, formalP95: 80, tempP95: 62, lan: 20000, wan: 10000, category: "Synthesis",    func: "Logic Synthesis", tml: "CM Chen" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50, tempQty: 5, borrowDuration: 40, formalP80Rate: 90, tempP80Rate: 80, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 90000 },
-                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 10, borrowDuration: 30, formalP80Rate: 85, tempP80Rate: 75, category: "Implementation", function: "Place & Route", tml: "CM Chen", cost: 60000 }
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 5,  borrowWeeks: 18.2, formalP95: 90, tempP95: 64, lan: 60000, wan: 30000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 10, borrowWeeks: 12.5, formalP95: 85, tempP95: 60, lan: 40000, wan: 20000, category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 10, borrowDuration: 45, formalP80Rate: 88, tempP80Rate: 78, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 30000 },
-                        { tool: "Tessent SiliconTest", formalQty: 80, tempQty: 8, borrowDuration: 30, formalP80Rate: 90, tempP80Rate: 80, category: "DFT", function: "Silicon Test", tml: "CW Ko", cost: 20000 }
+                        { tool: "Calibre nmDRC/LVS",   formalQty: 150, tempQty: 10, borrowWeeks: 15.6, formalP95: 88, tempP95: 62, lan: 20000, wan: 10000, category: "Verification", func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Tessent SiliconTest", formalQty: 80,  tempQty: 8,  borrowWeeks: 10.4, formalP95: 90, tempP95: 58, lan: 13000, wan: 7000,  category: "DFT",          func: "Silicon Test",          tml: "CW Ko" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 5, borrowDuration: 60, formalP80Rate: 85, tempP80Rate: 75, category: "Signoff", function: "Power Integrity", tml: "CM Chen", cost: 35000 }
+                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 5, borrowWeeks: 15.6, formalP95: 85, tempP95: 60, lan: 25000, wan: 10000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
                     ],
-                    "Synopsys_HW": [],
-                    "Synopsys_Maint": [],
-                    "Cadence_HW": [],
-                    "Keysight_SW": []
+                    "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
-                fulfillmentRisk: {
+                prTracking: {
                     "Synopsys_HW": [
-                        { pr: "PR-2027-015", product: "HPC Processing Server Rack", bu: "CPU Design BU", tml: "CW Ko", project: "N3P Alpha Project", confirmDate: "2027/01/10", targetDate: "2027/03/20", verifyDate: "2027/03/25", orderAmount: 650000, status: "已完成" },
-                        { pr: "PR-2027-016", product: "In-Circuit Emulator Box", bu: "GPU Verification BU", tml: "CC Mao", project: "N2 Ultra Project", confirmDate: "2027/01/02", targetDate: "2027/04/15", verifyDate: "2027/04/12", orderAmount: 420000, status: "已完成" }
+                        { status: "Completed", product: "HPC Processing Server Rack", spending: 650000, bu: "CPU Design BU",       project: "N3P Alpha Project", tml: "CW Ko",  prCompletionDate: "2026/12/10", projectRequiredDate: "2027/03/20", supplierDeliveryDate: "2027/03/18", acceptanceDate: "2027/03/25" },
+                        { status: "Completed", product: "In-Circuit Emulator Box",    spending: 420000, bu: "GPU Verification BU", project: "N2 Ultra Project",  tml: "CC Mao", prCompletionDate: "2027/01/02", projectRequiredDate: "2027/04/15", supplierDeliveryDate: "2027/04/12", acceptanceDate: "2027/04/20" }
                     ],
                     "Cadence_HW": [
-                        { pr: "PR-2027-017", product: "Palladium Z2 Emulator Chassis", bu: "AI Compute Platform BU", tml: "George Chien", project: "Tensor Gen2 Project", confirmDate: "2027/01/10", targetDate: "2027/03/25", verifyDate: "2027/04/05", orderAmount: 260000, status: "已完成" },
-                        { pr: "PR-2027-018", product: "Protium S1 Hardware System", bu: "AI Compute Platform BU", tml: "CM Chen", project: "Project Thor", confirmDate: "2027/01/10", targetDate: "2027/04/25", verifyDate: "2027/04/22", orderAmount: 160000, status: "已完成" }
+                        { status: "Completed", product: "Palladium Z2 Emulator Chassis", spending: 260000, bu: "AI Compute Platform BU", project: "Tensor Gen2 Project", tml: "George Chien", prCompletionDate: "2027/01/10", projectRequiredDate: "2027/03/25", supplierDeliveryDate: "2027/04/05", acceptanceDate: "2027/04/10" },
+                        { status: "Completed", product: "Protium S1 Hardware System",    spending: 160000, bu: "AI Compute Platform BU", project: "Project Thor",        tml: "CM Chen",      prCompletionDate: "2026/12/20", projectRequiredDate: "2027/04/25", supplierDeliveryDate: "2027/04/22", acceptanceDate: "2027/04/30" }
                     ]
                 },
                 spendBreakdown: {
                     "Synopsys_SW": [
-                        { pr: "PR-2027-001", dealStart: "2027/01/01", dealEnd: "2027/03/31", item: "TLA Core IP Renewal", budget: 3200000, demand: 3200000, spending: 3100000 },
-                        { pr: "PR-2027-002", dealStart: "2027/04/01", dealEnd: "2027/06/30", item: "AI-Driven Compiler Add-on", budget: 1200000, demand: 1300000, spending: 1200000 },
-                        { pr: "PR-2027-003", dealStart: "2027/07/01", dealEnd: "2027/09/30", item: "Fusion Design Platform Upgrade", budget: 800000, demand: 900000, spending: 800000 }
+                        { item: "TLA Core IP Renewal",            period: "2027/1/1-2027/12/31", demand: 3200000, budget: 3200000, spending: 3100000 },
+                        { item: "AI-Driven Compiler Add-on",      period: "2027/1/1-2027/12/31", demand: 1300000, budget: 1200000, spending: 1200000 },
+                        { item: "Fusion Design Platform Upgrade", period: "2027/1/1-2027/12/31", demand: 900000,  budget: 800000,  spending: 800000 }
                     ],
                     "Synopsys_HW": [
-                        { pr: "PR-2027-004", dealStart: "2027/01/20", dealEnd: null, item: "HPC Processing Server Nodes for Simulation Farm", budget: 1100000, demand: 1100000, spending: 1050000 }
+                        { item: "HPC Processing Server Nodes", period: "2027/1/20-2027/12/31", demand: 650000, budget: 650000, spending: 620000 },
+                        { item: "In-Circuit Emulator Box",     period: "2027/1/2-2027/12/31",  demand: 450000, budget: 450000, spending: 430000 }
                     ],
                     "Synopsys_Maint": [
-                        { pr: "PR-2027-005", dealStart: "2027/01/01", dealEnd: "2027/12/31", item: "Synopsys Hardware Maintenance Contract", budget: 550000, demand: 550000, spending: 530000 }
+                        { item: "Synopsys Hardware Maintenance Contract", period: "2027/1/1-2027/12/31", demand: 550000, budget: 550000, spending: 530000 }
                     ],
                     "Cadence_SW": [
-                        { pr: "PR-2027-006", dealStart: "2027/01/01", dealEnd: "2027/03/31", item: "Digital Design Platform Subscription", budget: 2800000, demand: 2800000, spending: 2750000 },
-                        { pr: "PR-2027-007", dealStart: "2027/04/01", dealEnd: "2027/06/30", item: "Spectre Verification Suite Expansion", budget: 1200000, demand: 1300000, spending: 1200000 },
-                        { pr: "PR-2027-008", dealStart: "2027/07/01", dealEnd: "2027/09/30", item: "Cerebrus AI Optimization Tool Suite", budget: 800000, demand: 800000, spending: 750000 }
+                        { item: "Digital Design Platform Subscription", period: "2027/1/1-2027/12/31", demand: 2800000, budget: 2800000, spending: 2750000 },
+                        { item: "Spectre Verification Suite Expansion", period: "2027/1/1-2027/12/31", demand: 1300000, budget: 1200000, spending: 1200000 },
+                        { item: "Cerebrus AI Optimization Tool Suite",  period: "2027/1/1-2027/12/31", demand: 800000,  budget: 800000,  spending: 750000 }
                     ],
                     "Cadence_HW": [
-                        { pr: "PR-2027-009", dealStart: "2027/02/15", dealEnd: null, item: "Palladium Emulation System Expansion", budget: 100000, demand: 200000, spending: 190000 },
-                        { pr: "PR-2027-010", dealStart: "2027/08/10", dealEnd: null, item: "Protium S1 Hardware Core Integration", budget: 100000, demand: 150000, spending: 150000 }
+                        { item: "Palladium Emulation System Expansion", period: "2027/2/15-2027/12/31", demand: 200000, budget: 100000, spending: 190000 },
+                        { item: "Protium S1 Hardware Core Integration", period: "2027/8/10-2027/12/31", demand: 150000, budget: 100000, spending: 150000 }
                     ],
                     "Siemens_SW": [
-                        { pr: "PR-2027-011", dealStart: "2027/01/01", dealEnd: "2027/06/30", item: "Calibre Physical Verification Maintenance", budget: 1600000, demand: 1600000, spending: 1550000 },
-                        { pr: "PR-2027-012", dealStart: "2027/07/01", dealEnd: "2027/12/31", item: "Tessent Test Suite Floating Licenses", budget: 600000, demand: 600000, spending: 550000 }
+                        { item: "Calibre Physical Verification Maintenance", period: "2027/1/1-2027/6/30",  demand: 1600000, budget: 1600000, spending: 1550000 },
+                        { item: "Tessent Test Suite Floating Licenses",      period: "2027/7/1-2027/12/31", demand: 650000,  budget: 600000,  spending: 600000 }
                     ],
                     "Ansys_SW": [
-                        { pr: "PR-2027-013", dealStart: "2027/01/01", dealEnd: "2027/12/31", item: "RedHawk-SC Power Integrity Licenses", budget: 900000, demand: 950000, spending: 920000 }
+                        { item: "RedHawk-SC Power Integrity Licenses", period: "2027/1/1-2027/12/31", demand: 950000, budget: 900000, spending: 920000 }
                     ],
                     "Keysight_SW": [
-                        { pr: "PR-2027-014", dealStart: "2027/01/20", dealEnd: "2027/03/31", item: "High-Freq Analyzer Calibration Maintenance", budget: 120000, demand: 130000, spending: 120000 }
+                        { item: "High-Freq Analyzer Calibration Maintenance", period: "2027/1/20-2027/3/31", demand: 130000, budget: 120000, spending: 120000 }
                     ]
                 }
             },
             "2028": {
                 vendors: [
-                    { id: "Synopsys_SW", vendor: "Synopsys", type: "Software", budget: 5500000, demand: 5500000, spending: 5300000, temp: 40000 },
-                    { id: "Synopsys_HW", vendor: "Synopsys", type: "Hardware", budget: 1200000, demand: 1200000, spending: 1150000, temp: 0 },
-                    { id: "Synopsys_Maint", vendor: "Synopsys", type: "Hardware Maintenance", budget: 600000, demand: 590000, spending: 580000, temp: 0 }, 
-                    { id: "Cadence_SW", vendor: "Cadence", type: "Software", budget: 5000000, demand: 5100000, spending: 4900000, temp: 50000 },
-                    { id: "Cadence_HW", vendor: "Cadence", type: "Hardware", budget: 100000, demand: 300000, spending: 290000, temp: 0 }, 
-                    { id: "Siemens_SW", vendor: "Siemens EDA", type: "Software", budget: 2400000, demand: 2400000, spending: 2300000, temp: 15000 },
-                    { id: "Ansys_SW", vendor: "Ansys", type: "Software", budget: 1000000, demand: 1000000, spending: 960000, temp: 10000 },
-                    { id: "Keysight_SW", vendor: "Keysight", type: "Software", budget: 100000, demand: 140000, spending: 130000, temp: 0 }
+                    { id: "Synopsys_SW",    vendor: "Synopsys",    type: "Software",             demand: 5500000, budget: 5500000, spending: 5300000, temp: 40000 },
+                    { id: "Synopsys_HW",    vendor: "Synopsys",    type: "Hardware",             demand: 1200000, budget: 1200000, spending: 1150000, temp: 0 },
+                    { id: "Synopsys_Maint", vendor: "Synopsys",    type: "Hardware Maintenance", demand: 590000,  budget: 600000,  spending: 580000,  temp: 0 },
+                    { id: "Cadence_SW",     vendor: "Cadence",     type: "Software",             demand: 5100000, budget: 5000000, spending: 4900000, temp: 50000 },
+                    { id: "Cadence_HW",     vendor: "Cadence",     type: "Hardware",             demand: 300000,  budget: 100000,  spending: 290000,  temp: 0 },
+                    { id: "Siemens_SW",     vendor: "Siemens EDA", type: "Software",             demand: 2400000, budget: 2400000, spending: 2300000, temp: 15000 },
+                    { id: "Ansys_SW",       vendor: "Ansys",       type: "Software",             demand: 1000000, budget: 1000000, spending: 960000,  temp: 10000 },
+                    { id: "Keysight_SW",    vendor: "Keysight",    type: "Software",             demand: 140000,  budget: 100000,  spending: 130000,  temp: 0 }
                 ],
                 tempKey: {
                     "Synopsys_SW": [
-                        { tool: "VCS Simulator Ultra", formalQty: 100, tempQty: 3, borrowDuration: 45, formalP80Rate: 95, tempP80Rate: 88, category: "Verification", function: "Simulation", tml: "CW Ko", cost: 30000 },
-                        { tool: "PrimeTime PX Signoff", formalQty: 80, tempQty: 2, borrowDuration: 30, formalP80Rate: 92, tempP80Rate: 82, category: "Signoff", function: "Timing Analysis", tml: "CC Mao", cost: 10000 }
+                        { tool: "VCS Simulator Ultra",  formalQty: 100, tempQty: 3, borrowWeeks: 7.8, formalP95: 95, tempP95: 60, lan: 20000, wan: 10000, category: "Verification", func: "Simulation",      tml: "CW Ko" },
+                        { tool: "PrimeTime PX Signoff", formalQty: 80,  tempQty: 2, borrowWeeks: 5.2, formalP95: 92, tempP95: 55, lan: 7000,  wan: 3000,  category: "Signoff",      func: "Timing Analysis", tml: "CC Mao" }
                     ],
                     "Cadence_SW": [
-                        { tool: "Pegasus Physical Verification", formalQty: 50, tempQty: 12, borrowDuration: 40, formalP80Rate: 90, tempP80Rate: 80, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 30000 },
-                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 2, borrowDuration: 30, formalP80Rate: 85, tempP80Rate: 75, category: "Implementation", function: "Place & Route", tml: "CM Chen", cost: 20000 }
+                        { tool: "Pegasus Physical Verification", formalQty: 50,  tempQty: 12, borrowWeeks: 20.8, formalP95: 90, tempP95: 78, lan: 20000, wan: 10000, category: "Verification",   func: "Physical Verification", tml: "George Chien" },
+                        { tool: "Innovus Implementation System", formalQty: 100, tempQty: 2,  borrowWeeks: 5.2,  formalP95: 85, tempP95: 55, lan: 13000, wan: 7000,  category: "Implementation", func: "Place & Route",         tml: "CM Chen" }
                     ],
                     "Siemens_SW": [
-                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 5, borrowDuration: 45, formalP80Rate: 88, tempP80Rate: 78, category: "Verification", function: "Physical Verification", tml: "George Chien", cost: 15000 }
+                        { tool: "Calibre nmDRC/LVS", formalQty: 150, tempQty: 5, borrowWeeks: 10.4, formalP95: 88, tempP95: 58, lan: 10000, wan: 5000, category: "Verification", func: "Physical Verification", tml: "George Chien" }
                     ],
                     "Ansys_SW": [
-                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 1, borrowDuration: 60, formalP80Rate: 85, tempP80Rate: 75, category: "Signoff", function: "Power Integrity", tml: "CM Chen", cost: 10000 }
+                        { tool: "RedHawk-SC Power Integrity", formalQty: 80, tempQty: 1, borrowWeeks: 5.2, formalP95: 85, tempP95: 52, lan: 7000, wan: 3000, category: "Signoff", func: "Power Integrity", tml: "CM Chen" }
                     ],
-                    "Synopsys_HW": [],
-                    "Synopsys_Maint": [],
-                    "Cadence_HW": [],
-                    "Keysight_SW": []
+                    "Synopsys_HW": [], "Synopsys_Maint": [], "Cadence_HW": [], "Keysight_SW": []
                 },
-                fulfillmentRisk: {
+                prTracking: {
                     "Synopsys_HW": [
-                        { pr: "PR-2028-015", product: "HPC Processing Server Rack", bu: "CPU Design BU", tml: "CW Ko", project: "N3P Alpha Project", confirmDate: "2028/01/10", targetDate: "2028/03/20", verifyDate: "2028/03/15", orderAmount: 700000, status: "已完成" },
-                        { pr: "PR-2028-016", product: "In-Circuit Emulator Box", bu: "GPU Verification BU", tml: "CC Mao", project: "N2 Ultra Project", confirmDate: "2028/01/05", targetDate: "2028/04/20", verifyDate: "2028/04/25", orderAmount: 440000, status: "已完成" }
+                        { status: "Completed", product: "HPC Processing Server Rack", spending: 700000, bu: "CPU Design BU",       project: "N3P Alpha Project", tml: "CW Ko",  prCompletionDate: "2027/12/10", projectRequiredDate: "2028/03/20", supplierDeliveryDate: "2028/03/15", acceptanceDate: "2028/03/22" },
+                        { status: "Completed", product: "In-Circuit Emulator Box",    spending: 440000, bu: "GPU Verification BU", project: "N2 Ultra Project",  tml: "CC Mao", prCompletionDate: "2028/01/05", projectRequiredDate: "2028/04/20", supplierDeliveryDate: "2028/04/25", acceptanceDate: "2028/04/30" }
                     ],
                     "Cadence_HW": [
-                        { pr: "PR-2028-017", product: "Palladium Z2 Emulator Chassis", bu: "AI Compute Platform BU", tml: "George Chien", project: "Tensor Gen2 Project", confirmDate: "2028/02/10", targetDate: "2028/02/25", verifyDate: "2028/03/05", orderAmount: 270000, status: "已完成" },
-                        { pr: "PR-2028-018", product: "Protium S1 Hardware System", bu: "AI Compute Platform BU", tml: "CM Chen", project: "Project Thor", confirmDate: "2028/01/10", targetDate: "2028/05/01", verifyDate: "2028/04/28", orderAmount: 170000, status: "已完成" }
+                        { status: "Completed", product: "Palladium Z2 Emulator Chassis", spending: 270000, bu: "AI Compute Platform BU", project: "Tensor Gen2 Project", tml: "George Chien", prCompletionDate: "2028/02/10", projectRequiredDate: "2028/02/25", supplierDeliveryDate: "2028/03/05", acceptanceDate: "2028/03/10" }
                     ]
                 },
                 spendBreakdown: {
                     "Synopsys_SW": [
-                        { pr: "PR-2028-001", dealStart: "2028/01/01", dealEnd: "2028/03/31", item: "TLA Core IP Renewal", budget: 3500000, demand: 3500000, spending: 3400000 },
-                        { pr: "PR-2028-002", dealStart: "2028/04/01", dealEnd: "2028/06/30", item: "AI-Driven Compiler Add-on", budget: 1200000, demand: 1200000, spending: 1150000 },
-                        { pr: "PR-2028-003", dealStart: "2028/07/01", dealEnd: "2028/09/30", item: "Fusion Design Platform Upgrade", budget: 800000, demand: 800000, spending: 750000 }
+                        { item: "TLA Core IP Renewal",            period: "2028/1/1-2028/12/31", demand: 3500000, budget: 3500000, spending: 3400000 },
+                        { item: "AI-Driven Compiler Add-on",      period: "2028/1/1-2028/12/31", demand: 1200000, budget: 1200000, spending: 1150000 },
+                        { item: "Fusion Design Platform Upgrade", period: "2028/1/1-2028/12/31", demand: 800000,  budget: 800000,  spending: 750000 }
                     ],
                     "Synopsys_HW": [
-                        { pr: "PR-2028-004", dealStart: "2028/01/20", dealEnd: null, item: "HPC Processing Server Nodes for Simulation Farm", budget: 1200000, demand: 1200000, spending: 1150000 }
+                        { item: "HPC Processing Server Nodes", period: "2028/1/20-2028/12/31", demand: 700000, budget: 700000, spending: 680000 },
+                        { item: "In-Circuit Emulator Box",     period: "2028/1/5-2028/12/31",  demand: 500000, budget: 500000, spending: 470000 }
                     ],
                     "Synopsys_Maint": [
-                        { pr: "PR-2028-005", dealStart: "2028/01/01", dealEnd: "2028/12/31", item: "Synopsys Hardware Maintenance Contract", budget: 600000, demand: 590000, spending: 580000 }
+                        { item: "Synopsys Hardware Maintenance Contract", period: "2028/1/1-2028/12/31", demand: 590000, budget: 600000, spending: 580000 }
                     ],
                     "Cadence_SW": [
-                        { pr: "PR-2028-006", dealStart: "2028/01/01", dealEnd: "2028/03/31", item: "Digital Design Platform Subscription", budget: 3000000, demand: 3000000, spending: 2950000 },
-                        { pr: "PR-2028-007", dealStart: "2028/04/01", dealEnd: "2028/06/30", item: "Spectre Verification Suite Expansion", budget: 1200000, demand: 1300000, spending: 1200000 },
-                        { pr: "PR-2028-008", dealStart: "2028/07/01", dealEnd: "2028/09/30", item: "Cerebrus AI Optimization Tool Suite", budget: 800000, demand: 800000, spending: 750000 }
+                        { item: "Digital Design Platform Subscription", period: "2028/1/1-2028/12/31", demand: 3000000, budget: 3000000, spending: 2950000 },
+                        { item: "Spectre Verification Suite Expansion", period: "2028/1/1-2028/12/31", demand: 1300000, budget: 1200000, spending: 1200000 },
+                        { item: "Cerebrus AI Optimization Tool Suite",  period: "2028/1/1-2028/12/31", demand: 800000,  budget: 800000,  spending: 750000 }
                     ],
                     "Cadence_HW": [
-                        { pr: "PR-2028-009", dealStart: "2028/02/15", dealEnd: null, item: "Palladium Emulation System Expansion", budget: 100000, demand: 180000, spending: 170000 },
-                        { pr: "PR-2028-010", dealStart: "2028/08/10", dealEnd: null, item: "Protium S1 Hardware Core Integration", budget: 50000, demand: 120000, spending: 120000 }
+                        { item: "Palladium Emulation System Expansion", period: "2028/2/15-2028/12/31", demand: 180000, budget: 60000, spending: 170000 },
+                        { item: "Protium S1 Hardware Core Integration", period: "2028/8/10-2028/12/31", demand: 120000, budget: 40000, spending: 120000 }
                     ],
                     "Siemens_SW": [
-                        { pr: "PR-2028-011", dealStart: "2028/01/01", dealEnd: "2028/06/30", item: "Calibre Physical Verification Maintenance", budget: 1800000, demand: 1800000, spending: 1750000 },
-                        { pr: "PR-2028-012", dealStart: "2028/07/01", dealEnd: "2028/12/31", item: "Tessent Test Suite Floating Licenses", budget: 600000, demand: 600000, spending: 550000 }
+                        { item: "Calibre Physical Verification Maintenance", period: "2028/1/1-2028/6/30",  demand: 1800000, budget: 1800000, spending: 1750000 },
+                        { item: "Tessent Test Suite Floating Licenses",      period: "2028/7/1-2028/12/31", demand: 600000,  budget: 600000,  spending: 550000 }
                     ],
                     "Ansys_SW": [
-                        { pr: "PR-2028-013", dealStart: "2028/01/01", dealEnd: "2028/12/31", item: "RedHawk-SC Power Integrity Licenses", budget: 1000000, demand: 1000000, spending: 960000 }
+                        { item: "RedHawk-SC Power Integrity Licenses", period: "2028/1/1-2028/12/31", demand: 1000000, budget: 1000000, spending: 960000 }
                     ],
                     "Keysight_SW": [
-                        { pr: "PR-2028-014", dealStart: "2028/01/20", dealEnd: "2028/03/31", item: "High-Freq Analyzer Calibration Maintenance", budget: 100000, demand: 140000, spending: 130000 }
+                        { item: "High-Freq Analyzer Calibration Maintenance", period: "2028/1/20-2028/3/31", demand: 140000, budget: 100000, spending: 130000 }
                     ]
                 }
             }
         };
 
-        const mockNonPlannedData = {
-            "Keysight_SW": [
-                { bu: "RF Design BU", project: "WiFi-7 Transceiver (6nm)", leadTime: 14, received: "2026/02/01", requested: "2026/02/15" }
-            ],
-            "Cadence_HW": [
-                { bu: "AI Compute Platform FU", project: "Emulation Hardware Upgrade (Palladium Z2)", leadTime: 12, received: "2026/02/12", requested: "2026/02/24" }
-            ]
+        var state = { filterYear: '2026', filterVendor: 'All', filterType: 'All' };
+
+        // ==================== 指標計算 ====================
+
+        // Add-on Purchase Risk：三項條件逐項判定，3 項全中為 At Risk、達 2 項為 Watchlist
+        // 1. Borrow Duration Ratio % = (借用週數 ÷ 52 週) × 100 ≥ 30%
+        // 2. YTD Formal License P95 U-rate% ≥ 70%
+        // 3. YTD Temp License P95 U-rate% ≥ 70%
+        function evaluateToolRisk(tool) {
+            var ratio = (tool.borrowWeeks / 52) * 100;
+            var c1 = ratio >= BORROW_DURATION_RATIO_THRESHOLD;
+            var c2 = tool.formalP95 >= P95_URATE_THRESHOLD;
+            var c3 = tool.tempP95 >= P95_URATE_THRESHOLD;
+            var met = (c1 ? 1 : 0) + (c2 ? 1 : 0) + (c3 ? 1 : 0);
+            var level = met === 3 ? 'At Risk' : (met === 2 ? 'Watchlist' : '');
+            return { ratio: ratio, c1: c1, c2: c2, c3: c3, met: met, level: level };
+        }
+
+        // 供應商層級 Add-on Purchase Risk：旗下任一工具為 At Risk 即為 At Risk，其次 Watchlist
+        window.getVendorAddOnRisk = function(vendorId) {
+            var tools = (yearlyData[state.filterYear].tempKey || {})[vendorId] || [];
+            if (tools.length === 0) return '';
+            var hasAtRisk = false, hasWatchlist = false;
+            for (var i = 0; i < tools.length; i++) {
+                var r = evaluateToolRisk(tools[i]);
+                if (r.level === 'At Risk') hasAtRisk = true;
+                else if (r.level === 'Watchlist') hasWatchlist = true;
+            }
+            return hasAtRisk ? 'At Risk' : (hasWatchlist ? 'Watchlist' : '');
         };
 
-        // 狀態管理物件
-        var state = {
-            currentView: 'level1', 
-            filterType: 'All',
-            filterVendor: 'All', 
-            filterYear: '2026', 
-            sortBy: null, 
-            sortDesc: false
+        // PR 指標：
+        // PR Lead Time = Project Required Date － PR Completion Date
+        // PR Lead Time Shortfall = MAX(90 － PR Lead Time, 0)
+        // On-Time PR Rate % = Shortfall = 0 的筆數 ÷ 已完成 PR 總數 × 100
+        // Supplier On-Time Delivery Rate % = 供應商交付日 ≤ 專案需求日 的筆數 ÷ 已完成 PR 總數 × 100
+        window.getVendorPrMetrics = function(vendorId) {
+            var records = (yearlyData[state.filterYear].prTracking || {})[vendorId] || [];
+            if (records.length === 0) return null;
+
+            var prTotal = 0, prOnTime = 0, deliveryTotal = 0, deliveryOnTime = 0;
+            for (var i = 0; i < records.length; i++) {
+                var rec = records[i];
+                if (rec.prCompletionDate && rec.projectRequiredDate) {
+                    prTotal++;
+                    var leadTime = getDaysDiff(rec.prCompletionDate, rec.projectRequiredDate);
+                    if (Math.max(PR_LEAD_TIME_THRESHOLD - leadTime, 0) === 0) prOnTime++;
+                }
+                if (rec.supplierDeliveryDate && rec.projectRequiredDate) {
+                    deliveryTotal++;
+                    if (new Date(rec.supplierDeliveryDate) <= new Date(rec.projectRequiredDate)) deliveryOnTime++;
+                }
+            }
+            return {
+                prRate: prTotal > 0 ? Math.round((prOnTime / prTotal) * 100) : null,
+                deliveryRate: deliveryTotal > 0 ? Math.round((deliveryOnTime / deliveryTotal) * 100) : null
+            };
         };
 
-        // ==================== 【ES5 高規相容核心引擎群】 ====================
-        
-        // 100% 相容之顯示名稱轉換 (不含 ES6 .find 迴圈)
-        window.getDisplayName = function(id) {
-            var activeYearData = yearlyData[state.filterYear];
-            if (activeYearData && activeYearData.vendors) {
-                for (var i = 0; i < activeYearData.vendors.length; i++) {
-                    var v = activeYearData.vendors[i];
-                    if (v.id === id) {
-                        var typeText = v.type === 'Hardware Maintenance' ? 'Maintenance' : v.type;
-                        return v.vendor + ' (' + typeText + ')';
+        // Spending vs. Budget 橫條圖：同一張表共用一個刻度，讓各列長度可直接互相比較
+        function buildBarCell(spending, budget, scale) {
+            if (!scale || scale <= 0) return '<td class="py-3 px-4"></td>';
+            var barPct = Math.min((spending / scale) * 100, 100);
+            var linePct = Math.min((budget / scale) * 100, 100);
+            var over = spending > budget;
+            return '<td class="py-3 px-4">' +
+                '<div class="relative h-5 w-full bg-slate-100 rounded-sm">' +
+                    '<div class="absolute inset-y-0 left-0 ' + (over ? 'bg-rose-300' : 'bg-gsm-teal/50') + ' rounded-sm" style="width:' + barPct + '%"></div>' +
+                    '<div class="absolute inset-y-0 w-0.5 bg-slate-700" style="left:' + linePct + '%"></div>' +
+                '</div></td>';
+        }
+
+        // ==================== Layer 3 渲染 ====================
+        window.renderLayer3 = function() {
+            var activeYear = yearlyData[state.filterYear];
+            var vendors = activeYear.vendors;
+
+            var filtered = [];
+            for (var i = 0; i < vendors.length; i++) {
+                var v = vendors[i];
+                if (state.filterVendor !== 'All' && v.vendor !== state.filterVendor) continue;
+                if (state.filterType !== 'All' && v.type !== state.filterType) continue;
+                filtered.push(v);
+            }
+
+            var totalDemand = 0, totalBudget = 0, totalSpending = 0, totalTemp = 0, scale = 0;
+            for (var k = 0; k < filtered.length; k++) {
+                totalDemand += filtered[k].demand;
+                totalBudget += filtered[k].budget;
+                totalSpending += filtered[k].spending;
+                totalTemp += filtered[k].temp;
+                if (filtered[k].budget > scale) scale = filtered[k].budget;
+                if (filtered[k].spending > scale) scale = filtered[k].spending;
+            }
+            document.getElementById('kpi-demand').innerText = money(totalDemand);
+            document.getElementById('kpi-budget').innerText = money(totalBudget);
+            document.getElementById('kpi-spending').innerText = money(totalSpending);
+            document.getElementById('kpi-temp').innerText = money(totalTemp);
+
+            var tbody = document.getElementById('layer3-table-body');
+            tbody.innerHTML = '';
+            if (filtered.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-400">No data for current filter</td></tr>';
+                return;
+            }
+
+            for (var r = 0; r < filtered.length; r++) {
+                var item = filtered[r];
+                var typeText = item.type === 'Hardware Maintenance' ? 'Maintenance' : item.type;
+                var pct = item.budget > 0 ? Math.round((item.spending / item.budget) * 100) : 0;
+                var pctClass = pct > 100 ? 'text-rose-600 font-bold' : 'text-slate-700';
+
+                // On-Time PR Rate / Supplier On-Time Delivery Rate：僅硬體採購適用；硬體但無 PR 紀錄顯示 NA
+                var prCell = '<td class="py-3 px-4 text-center text-slate-400">-</td>';
+                var deliveryCell = '<td class="py-3 px-4 text-center text-slate-400">-</td>';
+                if (item.type === 'Hardware') {
+                    var m = window.getVendorPrMetrics(item.id);
+                    if (m && m.prRate !== null) {
+                        prCell = '<td class="py-3 px-4 text-center font-semibold text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4B(\'' + item.id + '\')">' + m.prRate + '%</td>';
+                    } else {
+                        prCell = '<td class="py-3 px-4 text-center text-slate-400">NA</td>';
                     }
+                    if (m && m.deliveryRate !== null) {
+                        deliveryCell = '<td class="py-3 px-4 text-center font-semibold text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4B(\'' + item.id + '\')">' + m.deliveryRate + '%</td>';
+                    } else {
+                        deliveryCell = '<td class="py-3 px-4 text-center text-slate-400">NA</td>';
+                    }
+                }
+
+                // Add-on Purchase Risk：僅臨時授權（軟體）適用
+                var riskLevel = window.getVendorAddOnRisk(item.id);
+                var riskCell = '<td class="py-3 px-4"></td>';
+                if (riskLevel === 'At Risk') {
+                    riskCell = '<td class="py-3 px-4 text-center bg-gsm-risk text-white font-bold text-xs cursor-pointer hover:underline" onclick="window.showLayer4C(\'' + item.id + '\')">At Risk</td>';
+                } else if (riskLevel === 'Watchlist') {
+                    riskCell = '<td class="py-3 px-4 text-center bg-gsm-watch text-slate-800 font-bold text-xs cursor-pointer hover:underline" onclick="window.showLayer4C(\'' + item.id + '\')">Watchlist</td>';
+                }
+
+                var tempCell = item.temp === 0
+                    ? '<td class="py-3 px-4 text-right font-mono text-slate-400">$0</td>'
+                    : '<td class="py-3 px-4 text-right font-mono text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4C(\'' + item.id + '\')">' + money(item.temp) + '</td>';
+
+                tbody.innerHTML +=
+                    '<tr class="hover:bg-slate-50 transition">' +
+                        '<td class="py-3 px-4 font-semibold text-slate-800">' + item.vendor + '</td>' +
+                        '<td class="py-3 px-4 text-slate-600">' + typeText + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4A(\'' + item.id + '\')">' + money(item.demand) + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4A(\'' + item.id + '\')">' + money(item.budget) + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4A(\'' + item.id + '\')">' + money(item.spending) + '</td>' +
+                        buildBarCell(item.spending, item.budget, scale) +
+                        '<td class="py-3 px-4 text-center font-mono ' + pctClass + '">' + pct + '%</td>' +
+                        prCell +
+                        deliveryCell +
+                        riskCell +
+                        tempCell +
+                    '</tr>';
+            }
+        };
+
+        // ==================== 導航 ====================
+        function getDisplayName(id) {
+            var vendors = yearlyData[state.filterYear].vendors;
+            for (var i = 0; i < vendors.length; i++) {
+                if (vendors[i].id === id) {
+                    var t = vendors[i].type === 'Hardware Maintenance' ? 'Maintenance' : vendors[i].type;
+                    return vendors[i].vendor + ' / ' + t;
                 }
             }
             return id;
-        };
-
-        // 彙總單一供應商在「臨時授權工具清單」中的原始數據 (取代直接借用單一工具分數)
-        function computeBorrowAggregate(vendorId) {
-            var activeYearData = yearlyData[state.filterYear];
-            var data = (activeYearData.tempKey && activeYearData.tempKey[vendorId]) || [];
-            if (data.length === 0) return null;
-            var formalSum = 0, tempSum = 0, costSum = 0;
-            for (var i = 0; i < data.length; i++) {
-                formalSum += data[i].formalQty;
-                tempSum += data[i].tempQty;
-                costSum += data[i].cost;
-            }
-            var rate = formalSum > 0 ? (tempSum / formalSum) * 100 : 0;
-            return { formalSum: formalSum, tempSum: tempSum, costSum: costSum, rate: rate };
         }
 
-        // 第一層 Borrow Risk Score 計算公式（絕對刻度，與採購前置時間風險評分同一套設計原則）：
-        // 分數 ＝ 該供應商整體借用率% (Temp 數量加總 ÷ Formal 數量加總 × 100)，超過 100% 則封頂 100。
-        // 借用率本身即為 0–100 的絕對比例，不需再與其他供應商相對比較；
-        // Temp license cost 加總不納入評分（避免高單價供應商即使借用率控制得宜仍被判為高風險），
-        // 改為顯示於分數下方，供「分數高 ＋ 金額大」交叉判斷處理順序。
-        window.getAllVendorBorrowRiskScores = function() {
-            var activeYearData = yearlyData[state.filterYear];
-            var vendors = activeYearData.vendors;
-            var result = {};
-            for (var i = 0; i < vendors.length; i++) {
-                var vid = vendors[i].id;
-                var agg = computeBorrowAggregate(vid);
-                if (!agg) continue;
-                var score = Math.round(Math.min(agg.rate, 100));
-                var level = score >= 70 ? 'High' : (score >= 40 ? 'Medium' : 'Low');
-                result[vid] = {
-                    score: score, level: level,
-                    rate: agg.rate, costSum: agg.costSum, formalSum: agg.formalSum, tempSum: agg.tempSum
-                };
+        function switchLayer(targetId, breadcrumbText) {
+            var layers = ['layer3-dashboard', 'layer4a-dashboard', 'layer4b-dashboard', 'layer4c-dashboard'];
+            for (var i = 0; i < layers.length; i++) {
+                document.getElementById(layers[i]).classList.add('hidden');
             }
-            return result;
-        };
-
-        // 彙總單一供應商在「採購前置時間風險」訂單清單中的原始數據，僅計入「已完成」訂單，避免進行中訂單混入造成誤判
-        function computeFulfillmentAggregate(vendorId, threshold) {
-            var activeYearData = yearlyData[state.filterYear];
-            var data = (activeYearData.fulfillmentRisk && activeYearData.fulfillmentRisk[vendorId]) || [];
-            var completed = [];
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].status !== '進行中') completed.push(data[i]);
-            }
-            if (completed.length === 0) return null;
-
-            var atRiskCount = 0, atRiskAmountSum = 0, overdueSum = 0;
-            for (var j = 0; j < completed.length; j++) {
-                var order = completed[j];
-                var leadTime = getDaysDiff(order.confirmDate, order.targetDate);
-                var overdueDays = Math.max(threshold - leadTime, 0);
-                if (leadTime < threshold) {
-                    atRiskCount++;
-                    atRiskAmountSum += (order.orderAmount || 0);
-                    overdueSum += overdueDays;
-                }
-            }
-            var atRiskRatio = (atRiskCount / completed.length) * 100;
-            var avgOverdueSeverity = atRiskCount > 0 ? (overdueSum / atRiskCount) : 0;
-            return {
-                totalOrders: completed.length,
-                atRiskCount: atRiskCount,
-                atRiskRatio: atRiskRatio,
-                atRiskAmountSum: atRiskAmountSum,
-                avgOverdueSeverity: avgOverdueSeverity
-            };
-        }
-
-        // 「進行中」訂單目前的 At Risk 筆數 —— 不計入 SAW 評分（避免分數失真、隨進度浮動），
-        // 而是作為獨立的即時預警標籤呈現，讓管理者仍能留意尚未完成但已顯露風險跡象的訂單
-        function computeInProgressAtRiskCount(vendorId, threshold) {
-            var activeYearData = yearlyData[state.filterYear];
-            var data = (activeYearData.fulfillmentRisk && activeYearData.fulfillmentRisk[vendorId]) || [];
-            var count = 0;
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].status === '進行中') {
-                    var leadTime = getDaysDiff(data[i].confirmDate, data[i].targetDate);
-                    if (leadTime < threshold) count++;
-                }
-            }
-            return count;
-        }
-
-        // 所有供應商的「進行中 At Risk」筆數彙總 (僅回傳 > 0 的項目)，供第一層與第二層的預警標籤使用
-        window.getAllVendorInProgressAtRiskCounts = function() {
-            var activeYearData = yearlyData[state.filterYear];
-            var vendors = activeYearData.vendors;
-            var result = {};
-            for (var i = 0; i < vendors.length; i++) {
-                if (vendors[i].type !== 'Hardware') continue;
-                var vid = vendors[i].id;
-                var threshold = getLeadTimeThreshold(vendors[i].type);
-                var count = computeInProgressAtRiskCount(vid, threshold);
-                if (count > 0) result[vid] = count;
-            }
-            return result;
-        }
-
-        // 第一層採購前置時間風險評分計算公式：頻率 (At Risk 比率%) 與嚴重度 (平均前置時間不足天數) 各佔 50% 加權平均。
-        // 採「絕對刻度」而非跨供應商 Min-Max Normalization —— 因為兩項指標本身即有天然上下界：
-        //   頻率：At Risk 比率本來就是 0–100%
-        //   嚴重度：平均不足天數 ÷ 門檻天數 × 100（不足天數達滿門檻代表完全沒給前置時間），超過則封頂 100
-        // 改用絕對刻度的原因：硬體供應商數量少（目前僅 2 家），Min-Max 會讓最差者恆得 100、最佳者恆得 0，
-        // 分數淪為排名而非風險程度，長官無法判斷「要不要處理」。絕對刻度可跨年度、跨供應商比較，新增供應商也不會使他人分數跳動。
-        // 注意：僅計算「已完成」訂單，確保分母與分數穩定，不受進行中訂單進度影響而浮動
-        window.getAllVendorFulfillmentRiskScores = function() {
-            var activeYearData = yearlyData[state.filterYear];
-            var vendors = activeYearData.vendors;
-            var result = {};
-            for (var i = 0; i < vendors.length; i++) {
-                if (vendors[i].type !== 'Hardware') continue;
-                var vid = vendors[i].id;
-                var threshold = getLeadTimeThreshold(vendors[i].type);
-                var agg = computeFulfillmentAggregate(vid, threshold);
-                if (!agg) continue;
-
-                var scoreRatio = Math.min(agg.atRiskRatio, 100);
-                var scoreSeverity = threshold > 0 ? Math.min((agg.avgOverdueSeverity / threshold) * 100, 100) : 0;
-                var score = Math.round(0.5 * scoreRatio + 0.5 * scoreSeverity);
-                var level = score >= 70 ? 'High' : (score >= 40 ? 'Medium' : 'Low');
-                result[vid] = {
-                    score: score, level: level,
-                    atRiskRatio: agg.atRiskRatio, avgOverdueSeverity: agg.avgOverdueSeverity,
-                    totalOrders: agg.totalOrders, atRiskCount: agg.atRiskCount, atRiskAmountSum: agg.atRiskAmountSum
-                };
-            }
-            return result;
-        };
-
-        // 彙總單一供應商「已完成」訂單的實際交付表現：驗收日 ≤ 專案需求日期 視為準時
-        function computeOnTimeDeliveryAggregate(vendorId) {
-            var activeYearData = yearlyData[state.filterYear];
-            var data = (activeYearData.fulfillmentRisk && activeYearData.fulfillmentRisk[vendorId]) || [];
-            var completed = [];
-            for (var i = 0; i < data.length; i++) {
-                if (data[i].status !== '進行中' && data[i].verifyDate) completed.push(data[i]);
-            }
-            if (completed.length === 0) return null;
-
-            var onTimeCount = 0;
-            for (var j = 0; j < completed.length; j++) {
-                if (new Date(completed[j].verifyDate) <= new Date(completed[j].targetDate)) onTimeCount++;
-            }
-            return {
-                totalOrders: completed.length,
-                onTimeCount: onTimeCount,
-                rate: (onTimeCount / completed.length) * 100
-            };
-        }
-
-        // 供應商準時交付率：與「採購前置時間風險評分」是兩件不同的事——前者量測我方下單時給的緩衝夠不夠，
-        // 這裡量測供應商本身交付表現，是唯一真正反映「這家供應商可不可靠」的欄位，因此獨立顯示、不與前置時間分數合併，
-        // 讓長官能分辨「該檢討內部流程」還是「該找供應商」。分數愈高代表愈可靠，色階與風險類分數相反（高＝好）。
-        window.getAllVendorOnTimeDeliveryScores = function() {
-            var activeYearData = yearlyData[state.filterYear];
-            var vendors = activeYearData.vendors;
-            var result = {};
-            for (var i = 0; i < vendors.length; i++) {
-                if (vendors[i].type !== 'Hardware') continue;
-                var vid = vendors[i].id;
-                var agg = computeOnTimeDeliveryAggregate(vid);
-                if (!agg) continue;
-                var rate = Math.round(agg.rate);
-                var level = rate >= 80 ? 'Good' : (rate >= 50 ? 'Caution' : 'Poor');
-                result[vid] = {
-                    rate: rate, level: level,
-                    totalOrders: agg.totalOrders, onTimeCount: agg.onTimeCount
-                };
-            }
-            return result;
-        };
-
-        // ==================== 2. 所有全域導航與第二層資料渲染控制 (100% 純原生 for 迴圈) ====================
-
-        window.showLevel1 = function() {
-            document.getElementById('level1-dashboard').classList.remove('hidden');
-            document.getElementById('level2a-dashboard').classList.add('hidden');
-            document.getElementById('level2b-dashboard').classList.add('hidden');
-            document.getElementById('level2c-dashboard').classList.add('hidden');
-            document.getElementById('level2d-dashboard').classList.add('hidden');
+            document.getElementById(targetId).classList.remove('hidden');
 
             var sep = document.getElementById('breadcrumb-separator');
-            var lvl2 = document.getElementById('breadcrumb-level2');
-            if (sep) sep.classList.add('hidden');
-            if (lvl2) lvl2.classList.add('hidden');
-        };
-
-        // 第二層 A：大 Deal + Add-on 臨時授權明細
-        window.showLevel2A = function(vendorId) {
-            document.getElementById('level1-dashboard').classList.add('hidden');
-            document.getElementById('level2a-dashboard').classList.remove('hidden');
-
-            var displayName = window.getDisplayName(vendorId);
-            var bcL2 = document.getElementById('breadcrumb-level2');
-            var sep = document.getElementById('breadcrumb-separator');
-            if (sep) sep.classList.remove('hidden');
-            if (bcL2) {
-                bcL2.classList.remove('hidden');
-                bcL2.innerText = displayName + ' 授權狀態明細';
-            }
-
-            document.getElementById('selected-vendor-title-a').innerText = ' - ' + displayName;
-
-            // 動態更新表頭年度標示 (微調需求 1)
-            var yearSpans = document.querySelectorAll('.selected-year-span');
-            for (var i = 0; i < yearSpans.length; i++) {
-                yearSpans[i].innerText = state.filterYear;
-            }
-
-            // 評分徽章：直接沿用與第一層總覽頁「完全相同」的計算函式與結果，確保兩層顯示的分數一致，不需使用者自行核對
-            var scoreBadgeElA = document.getElementById('level2a-score-badge');
-            if (scoreBadgeElA) {
-                var vendorBorrowScoreInfo = window.getAllVendorBorrowRiskScores()[vendorId];
-                if (vendorBorrowScoreInfo) {
-                    var borrowBadgeColorClass = vendorBorrowScoreInfo.level === 'High'
-                        ? 'bg-rose-100 text-rose-800'
-                        : (vendorBorrowScoreInfo.level === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700');
-                    var borrowBadgeLabel = vendorBorrowScoreInfo.level === 'High' ? '高風險' : (vendorBorrowScoreInfo.level === 'Medium' ? '中風險' : '低風險');
-                    scoreBadgeElA.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${borrowBadgeColorClass}">${borrowBadgeLabel} (${vendorBorrowScoreInfo.score})</span>`;
-                } else {
-                    scoreBadgeElA.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">尚無臨時授權資料可評分</span>';
-                }
-            }
-
-            var data = yearlyData[state.filterYear].tempKey[vendorId] || [];
-
-            // 安全原生冒泡排序 (降序)
-            for (var m = 0; m < data.length - 1; m++) {
-                for (var n = 0; n < data.length - 1 - m; n++) {
-                    if (data[n].cost < data[n+1].cost) {
-                        var temp = data[n];
-                        data[n] = data[n+1];
-                        data[n+1] = temp;
-                    }
-                }
-            }
-
-            var tbody = document.getElementById('temp-key-detail-rows');
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">當年度無臨時授權狀態數據</td></tr>';
-                } else {
-                    for (var r = 0; r < data.length; r++) {
-                        var item = data[r];
-                        var borrowRate = ((item.tempQty / item.formalQty) * 100).toFixed(1);
-                        var isRisk = parseFloat(borrowRate) >= 20.0;
-
-                        // Borrow Risk 判定亮燈 (At Risk 紅色 / Sufficient 綠色)
-                        var riskBadge = '';
-                        if (isRisk) {
-                            riskBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>At Risk</span>';
-                        } else {
-                            riskBadge = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700">Sufficient</span>';
-                        }
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="py-4 px-6 text-center">${riskBadge}</td>
-                                <td class="py-4 px-6 font-semibold text-slate-800">${item.tool}</td>
-                                <td class="py-4 px-6 text-center font-mono font-medium">${item.formalQty}</td>
-                                <td class="py-4 px-6 text-center font-mono font-medium text-blue-600">${Math.round(item.tempQty)}</td>
-                                <td class="py-4 px-6 text-center font-mono font-bold ${isRisk ? 'text-rose-600' : 'text-slate-700'}">${borrowRate}%</td>
-                                <td class="py-4 px-6 text-center font-mono">${Math.round(item.borrowDuration/7)}</td>
-                                <td class="py-4 px-6 text-center font-mono">${item.formalP80Rate}%</td>
-                                <td class="py-4 px-6 text-center font-mono">${item.tempP80Rate}%</td>
-                                <td class="py-4 px-6 text-right font-mono font-bold text-slate-900">$${item.cost.toLocaleString()}</td>
-                                <td class="py-4 px-6 text-slate-500">${item.category}</td>
-                                <td class="py-4 px-6 text-slate-500">${item.function}</td>
-                                <td class="py-4 px-6 font-bold text-slate-700">${item.tml}</td>
-                            </tr>
-                        `;
-                    }
-                }
-            }
-
-            // 頁尾彙總列：Formal 總量、Temp 總量、整體借用率%、Temp Key Cost 總額 —— 供第一層 BORROW RISK 分數交叉核對
-            var footerAgg = computeBorrowAggregate(vendorId);
-            var footerFormalEl = document.getElementById('temp-key-footer-formal');
-            var footerTempEl = document.getElementById('temp-key-footer-temp');
-            var footerRateEl = document.getElementById('temp-key-footer-rate');
-            var footerCostEl = document.getElementById('temp-key-footer-cost');
-            if (footerAgg) {
-                if (footerFormalEl) footerFormalEl.innerText = footerAgg.formalSum;
-                if (footerTempEl) footerTempEl.innerText = footerAgg.tempSum;
-                if (footerRateEl) footerRateEl.innerText = footerAgg.rate.toFixed(1) + '%';
-                if (footerCostEl) footerCostEl.innerText = '$' + footerAgg.costSum.toLocaleString();
+            var bc = document.getElementById('breadcrumb-layer4');
+            if (breadcrumbText) {
+                sep.classList.remove('hidden');
+                bc.classList.remove('hidden');
+                bc.innerText = breadcrumbText;
             } else {
-                if (footerFormalEl) footerFormalEl.innerText = '-';
-                if (footerTempEl) footerTempEl.innerText = '-';
-                if (footerRateEl) footerRateEl.innerText = '-';
-                if (footerCostEl) footerCostEl.innerText = '-';
+                sep.classList.add('hidden');
+                bc.classList.add('hidden');
+            }
+
+            var yearSpans = document.querySelectorAll('.year-span');
+            for (var y = 0; y < yearSpans.length; y++) yearSpans[y].innerText = state.filterYear;
+            window.scrollTo(0, 0);
+        }
+
+        window.showLayer3 = function() {
+            switchLayer('layer3-dashboard', null);
+            window.renderLayer3();
+        };
+
+        // ---- Layer 4A：Demand, Budget and Spending ----
+        window.showLayer4A = function(vendorId) {
+            var name = getDisplayName(vendorId);
+            switchLayer('layer4a-dashboard', 'Demand, Budget and Spending — ' + name);
+            document.getElementById('layer4a-vendor-title').innerText = name;
+
+            var rows = (yearlyData[state.filterYear].spendBreakdown || {})[vendorId] || [];
+            var tbody = document.getElementById('layer4a-table-body');
+            tbody.innerHTML = '';
+            if (rows.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">No contract detail for this vendor / type</td></tr>';
+                return;
+            }
+
+            var scale = 0;
+            for (var s = 0; s < rows.length; s++) {
+                if (rows[s].budget > scale) scale = rows[s].budget;
+                if (rows[s].spending > scale) scale = rows[s].spending;
+            }
+
+            for (var i = 0; i < rows.length; i++) {
+                var row = rows[i];
+                var pct = row.budget > 0 ? Math.round((row.spending / row.budget) * 100) : 0;
+                var pctClass = pct > 100 ? 'text-rose-600 font-bold' : 'text-slate-700';
+                tbody.innerHTML +=
+                    '<tr class="hover:bg-slate-50 transition">' +
+                        '<td class="py-3 px-4 font-semibold text-slate-800">' + row.item + '</td>' +
+                        '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + row.period + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(row.demand) + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(row.budget) + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(row.spending) + '</td>' +
+                        buildBarCell(row.spending, row.budget, scale) +
+                        '<td class="py-3 px-4 text-center font-mono ' + pctClass + '">' + pct + '%</td>' +
+                    '</tr>';
             }
         };
 
-        // 第二層 B (非計畫採購)
-        window.showLevel2B = function(vendorId) {
-            document.getElementById('level1-dashboard').classList.add('hidden');
-            document.getElementById('level2b-dashboard').classList.remove('hidden');
+        // ---- Layer 4B：On-Time PR / Supplier On-Time Delivery ----
+        window.showLayer4B = function(vendorId) {
+            var name = getDisplayName(vendorId);
+            switchLayer('layer4b-dashboard', 'On-Time PR / Supplier Delivery — ' + name);
+            document.getElementById('layer4b-vendor-title').innerText = name;
 
-            var displayName = window.getDisplayName(vendorId);
-            var bcL2 = document.getElementById('breadcrumb-level2');
-            var sep = document.getElementById('breadcrumb-separator');
-            if (sep) sep.classList.remove('hidden');
-            if (bcL2) {
-                bcL2.classList.remove('hidden');
-                bcL2.innerText = displayName + ' 非計畫性採購';
+            var metrics = window.getVendorPrMetrics(vendorId);
+            document.getElementById('layer4b-pr-rate').innerText = (metrics && metrics.prRate !== null) ? metrics.prRate + '%' : 'NA';
+            document.getElementById('layer4b-delivery-rate').innerText = (metrics && metrics.deliveryRate !== null) ? metrics.deliveryRate + '%' : 'NA';
+
+            var records = (yearlyData[state.filterYear].prTracking || {})[vendorId] || [];
+            var tbody = document.getElementById('layer4b-table-body');
+            tbody.innerHTML = '';
+            if (records.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">No PR record for this vendor / type</td></tr>';
+                return;
             }
 
-            document.getElementById('selected-vendor-title-b').innerText = ' - ' + displayName;
+            for (var i = 0; i < records.length; i++) {
+                var rec = records[i];
+                var leadTime = getDaysDiff(rec.prCompletionDate, rec.projectRequiredDate);
+                var shortfall = Math.max(PR_LEAD_TIME_THRESHOLD - leadTime, 0);
+                var leadClass = shortfall > 0 ? 'text-rose-600 font-bold' : 'text-slate-700';
+                var shortfallClass = shortfall > 0 ? 'text-rose-600 font-bold' : 'text-slate-400';
 
-            var yearSpans = document.querySelectorAll('.selected-year-span');
-            for (var i = 0; i < yearSpans.length; i++) {
-                yearSpans[i].innerText = state.filterYear;
-            }
+                // 供應商交付日晚於專案需求日 → 標紅，代表該筆未達成準時交付
+                var deliveryLate = rec.supplierDeliveryDate && rec.projectRequiredDate
+                    && new Date(rec.supplierDeliveryDate) > new Date(rec.projectRequiredDate);
+                var deliveryClass = deliveryLate ? 'text-rose-600 font-bold' : 'text-slate-600';
 
-            var data = mockNonPlannedData[vendorId] || [];
-            var tbody = document.getElementById('non-planned-rows');
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="py-8 text-center text-slate-400">當年度無非計畫性採購數據</td></tr>';
-                } else {
-                    for (var r = 0; r < data.length; r++) {
-                        var item = data[r];
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="py-4 px-6 font-semibold text-slate-800">${displayName}</td>
-                                <td class="py-4 px-6 text-slate-600">${item.bu}</td>
-                                <td class="py-4 px-6 text-slate-600 font-medium">${item.project}</td>
-                                <td class="py-4 px-6 text-center">
-                                  <span class="bg-rose-100 text-rose-800 px-3 py-1 rounded-full font-bold font-mono text-xs">${item.leadTime} 天</span>
-                                </td>
-                                <td class="py-4 px-6 font-mono text-slate-600">${item.received}</td>
-                                <td class="py-4 px-6 font-mono text-slate-600">${item.requested}</td>
-                            </tr>
-                        `;
-                    }
-                }
-            }
-        };
+                var statusClass = rec.status === 'In Progress' ? 'text-gsm-blue font-bold' : 'font-bold text-slate-700';
+                var rowClass = rec.status === 'In Progress' ? 'bg-blue-50/50 hover:bg-blue-100/50' : 'hover:bg-slate-50';
 
-        // 第二層 C (預算與實際花費項目拆解 - 修正完畢之原生迴圈)
-        window.showLevel2C = function(vendorId, metricName) {
-            document.getElementById('level1-dashboard').classList.add('hidden');
-            document.getElementById('level2c-dashboard').classList.remove('hidden');
-
-            var displayName = window.getDisplayName(vendorId);
-            var bcL2 = document.getElementById('breadcrumb-level2');
-            var sep = document.getElementById('breadcrumb-separator');
-            if (sep) sep.classList.remove('hidden');
-            if (bcL2) {
-                bcL2.classList.remove('hidden');
-                bcL2.innerText = displayName + ' ' + metricName + '拆解';
-            }
-
-            document.getElementById('selected-vendor-title-c').innerText = ' - ' + displayName;
-
-            var yearSpans = document.querySelectorAll('.selected-year-span');
-            for (var i = 0; i < yearSpans.length; i++) {
-                yearSpans[i].innerText = state.filterYear;
-            }
-
-            // 依據該項目類型決定 Deal Period 顯示方式：硬體僅顯示開始日期，軟體／維護顯示「開始日期－結束日期」
-            var itemTypeC = '';
-            var activeYearVendorsC = yearlyData[state.filterYear].vendors;
-            for (var vc = 0; vc < activeYearVendorsC.length; vc++) {
-                if (activeYearVendorsC[vc].id === vendorId) {
-                    itemTypeC = activeYearVendorsC[vc].type;
-                    break;
-                }
-            }
-            var isHardwareC = (itemTypeC === 'Hardware');
-
-            var data = yearlyData[state.filterYear].spendBreakdown[vendorId] || [];
-            var tbody = document.getElementById('spend-detail-rows');
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="7" class="py-8 text-center text-slate-400">當年度無細項預算數據</td></tr>';
-                } else {
-                    for (var r = 0; r < data.length; r++) {
-                        var item = data[r];
-                        var rateText = item.budget > 0
-                            ? Math.round((item.spending / item.budget) * 100) + '%'
-                            : '無預算額度 (N/A)';
-                        var rateStyle = item.budget > 0
-                            ? (item.spending > item.budget ? 'text-rose-600 font-bold' : 'text-slate-600')
-                            : 'text-amber-600 font-semibold';
-
-                        var dealPeriodText = isHardwareC
-                            ? item.dealStart
-                            : (item.dealStart + ' － ' + item.dealEnd);
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50 transition">
-                                <td class="py-4 px-6 font-semibold text-slate-700 font-mono">${dealPeriodText}</td>
-                                <td class="py-4 px-6 text-slate-800 font-medium">${item.item}</td>
-                                <td class="py-4 px-6 text-slate-500 font-mono">${item.pr}</td>
-                                <td class="py-4 px-6 text-right font-mono text-slate-600">$${item.demand.toLocaleString()}</td>
-                                <td class="py-4 px-6 text-right font-mono">$${item.budget.toLocaleString()}</td>
-                                <td class="py-4 px-6 text-right font-mono text-slate-900 font-semibold">$${item.spending.toLocaleString()}</td>
-                                <td class="py-4 px-6 text-center ${rateStyle}">${rateText}</td>
-                            </tr>
-                        `;
-                    }
-                }
+                tbody.innerHTML +=
+                    '<tr class="' + rowClass + ' transition">' +
+                        '<td class="py-3 px-4 ' + statusClass + '">' + rec.status + '</td>' +
+                        '<td class="py-3 px-4 font-semibold text-slate-800">' + rec.product + '</td>' +
+                        '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(rec.spending) + '</td>' +
+                        '<td class="py-3 px-4 text-slate-600">' + rec.bu + '</td>' +
+                        '<td class="py-3 px-4 text-slate-600">' + rec.project + '</td>' +
+                        '<td class="py-3 px-4 font-semibold text-slate-700">' + rec.tml + '</td>' +
+                        '<td class="py-3 px-4 text-center font-mono ' + leadClass + '">' + leadTime + '</td>' +
+                        '<td class="py-3 px-4 text-center font-mono ' + shortfallClass + '">' + shortfall + '</td>' +
+                        '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + (rec.prCompletionDate || '-') + '</td>' +
+                        '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + (rec.projectRequiredDate || '-') + '</td>' +
+                        '<td class="py-3 px-4 font-mono text-xs ' + deliveryClass + '">' + (rec.supplierDeliveryDate || '-') + '</td>' +
+                        '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + (rec.acceptanceDate || '-') + '</td>' +
+                    '</tr>';
             }
         };
 
-        // 第二層 D (採購前置時間風險追蹤明細) - 欄位重組 (已修正原生反引號，排除 naked 語法錯誤)
-        window.showLevel2D = function(vendorId) {
-            document.getElementById('level1-dashboard').classList.add('hidden');
-            document.getElementById('level2d-dashboard').classList.remove('hidden');
+        // ---- Layer 4C：Temporary License Details ----
+        window.showLayer4C = function(vendorId) {
+            var name = getDisplayName(vendorId);
+            switchLayer('layer4c-dashboard', 'Temporary License Details — ' + name);
+            document.getElementById('layer4c-vendor-title').innerText = name;
 
-            var displayName = window.getDisplayName(vendorId);
-            var bcL2 = document.getElementById('breadcrumb-level2');
-            var sep = document.getElementById('breadcrumb-separator');
-            if (sep) sep.classList.remove('hidden');
-            if (bcL2) {
-                bcL2.classList.remove('hidden');
-                bcL2.innerText = displayName + ' 前置時間風險';
-            }
+            var tools = (yearlyData[state.filterYear].tempKey || {})[vendorId] || [];
+            var tbody = document.getElementById('layer4c-table-body');
+            tbody.innerHTML = '';
 
-            document.getElementById('selected-vendor-title-d').innerText = ' - ' + displayName;
+            var totalFormal = 0, totalTemp = 0, totalLan = 0, totalWan = 0;
 
-            var yearSpans = document.querySelectorAll('.selected-year-span');
-            for (var i = 0; i < yearSpans.length; i++) {
-                yearSpans[i].innerText = state.filterYear;
-            }
-
-            // 依據點選項目的類型，動態決定標題中文字樣（軟體／硬體／維護）與 At Risk 門檻天數
-            var itemType = '';
-            var activeYearVendors = yearlyData[state.filterYear].vendors;
-            for (var v = 0; v < activeYearVendors.length; v++) {
-                if (activeYearVendors[v].id === vendorId) {
-                    itemType = activeYearVendors[v].type;
-                    break;
-                }
-            }
-            var typeLabelZh = getTypeLabelZh(itemType);
-            var threshold = getLeadTimeThreshold(itemType);
-
-            var typeLabelEl = document.getElementById('level2d-type-label');
-            if (typeLabelEl) typeLabelEl.innerText = '（' + typeLabelZh + '）';
-
-            // 評分徽章：直接沿用與第一層總覽頁「完全相同」的計算函式與結果，確保兩層顯示的分數一致，不需使用者自行核對
-            var scoreBadgeEl = document.getElementById('level2d-score-badge');
-            if (scoreBadgeEl) {
-                var vendorScoreInfo = window.getAllVendorFulfillmentRiskScores()[vendorId];
-                if (vendorScoreInfo) {
-                    var badgeColorClass = vendorScoreInfo.level === 'High'
-                        ? 'bg-rose-100 text-rose-800'
-                        : (vendorScoreInfo.level === 'Medium' ? 'bg-amber-100 text-amber-800' : 'bg-emerald-50 text-emerald-700');
-                    var badgeLabel = vendorScoreInfo.level === 'High' ? '高風險' : (vendorScoreInfo.level === 'Medium' ? '中風險' : '低風險');
-                    scoreBadgeEl.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${badgeColorClass}">${badgeLabel} (${vendorScoreInfo.score})</span>`;
-                } else {
-                    scoreBadgeEl.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">尚無已完成訂單可評分</span>';
-                }
-            }
-
-            var ontimeBadgeEl = document.getElementById('level2d-ontime-badge');
-            if (ontimeBadgeEl) {
-                var vendorOnTimeInfo = window.getAllVendorOnTimeDeliveryScores()[vendorId];
-                if (vendorOnTimeInfo) {
-                    var ontimeBadgeColorClass = vendorOnTimeInfo.level === 'Good'
-                        ? 'bg-emerald-50 text-emerald-700'
-                        : (vendorOnTimeInfo.level === 'Caution' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
-                    ontimeBadgeEl.innerHTML = `<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${ontimeBadgeColorClass}">準時 ${vendorOnTimeInfo.rate}% (${vendorOnTimeInfo.onTimeCount}／${vendorOnTimeInfo.totalOrders}筆)</span>`;
-                } else {
-                    ontimeBadgeEl.innerHTML = '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500">尚無已完成訂單可評分</span>';
-                }
-            }
-
-            var descEl = document.getElementById('level2d-lead-time-desc');
-            if (descEl) {
-                descEl.innerHTML = '採購 Lead Time 小於 <span class="font-bold text-rose-600">' + threshold + ' 天</span> 判定為「<span class="font-bold text-rose-600">At Risk</span>」，代表下單時預留的準備時間不足；否則為「<span class="font-bold text-emerald-600">On Track</span>」。';
-            }
-
-            var data = yearlyData[state.filterYear].fulfillmentRisk[vendorId] || [];
-            var tbody = document.getElementById('risk-detail-rows');
-
-            if (tbody) {
-                tbody.innerHTML = '';
-                if (data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">當年度無採購前置時間風險明細數據</td></tr>';
-                } else {
-                    for (var r = 0; r < data.length; r++) {
-                        var item = data[r];
-                        var leadTime = getDaysDiff(item.confirmDate, item.targetDate);
-                        var overdueDays = Math.max(threshold - leadTime, 0);
-
-                        // 依據該項目類型的門檻天數判定：常態為 On Track，有風險為 At Risk
-                        var isInProgress = item.status === '進行中';
-                        var scheduleAtRisk = leadTime < threshold;
-                        var riskLabel = '';
-                        if (scheduleAtRisk) {
-                            riskLabel = `
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800">
-                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>At Risk
-                                </span>`;
-                        } else {
-                            riskLabel = `
-                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700">
-                                    On Track
-                                </span>`;
-                        }
-
-                        // 訂單狀態：已完成／進行中——進行中訂單不計入第一層 At Risk 比率計算
-                        var statusBadge = isInProgress
-                            ? '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-700">進行中</span>'
-                            : '<span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-600">已完成</span>';
-
-                        // 缺口一：驗收完成日期不再只是純日期，改為同時判讀「有沒有真的準時交付」，跟前面「排程夠不夠寬鬆」的 At Risk 判定是兩件事
-                        // 邏輯：已完成訂單比對 驗收完成日期 與 專案需求日期——驗收日 ≤ 需求日 為準時；驗收日 > 需求日 為實際delay
-                        var deliveredLate = (!isInProgress && item.verifyDate) ? new Date(item.verifyDate) > new Date(item.targetDate) : null;
-                        var verifyCell = '';
-                        if (isInProgress) {
-                            verifyCell = '<span class="text-blue-600 font-semibold">進行中</span>';
-                        } else if (item.verifyDate) {
-                            var deliveryTag = deliveredLate
-                                ? `<span class="text-[10px] text-rose-600 font-semibold">實際delay ${getDaysDiff(item.targetDate, item.verifyDate)}天</span>`
-                                : '<span class="text-[10px] text-emerald-600 font-semibold">準時交付</span>';
-                            verifyCell = `<div class="flex flex-col"><span class="text-slate-600">${item.verifyDate}</span>${deliveryTag}</div>`;
-                        } else {
-                            verifyCell = '<span class="text-slate-400">-</span>';
-                        }
-
-                        // 現象組合標籤：交叉比對「排程判定」與「實際交付達成度」，標示出四種現象組合供人工查核
-                        // 註：僅描述資料觀察到的現象，不自動歸責。實際落後原因可能是供應商交貨、內部驗收流程排隊或需求日期異動，
-                        //     單靠兩個日期無法辨別，故用詞刻意中性，避免長官直接據此追究單一方責任
-                        var diagnosisTag = '';
-                        if (deliveredLate !== null) {
-                            if (scheduleAtRisk && deliveredLate) {
-                                diagnosisTag = '<span class="text-[10px] text-rose-700 font-bold mt-0.5">時程緊湊且落後</span>';
-                            } else if (scheduleAtRisk && !deliveredLate) {
-                                diagnosisTag = '<span class="text-[10px] text-amber-600 font-semibold mt-0.5">時程緊湊仍達標</span>';
-                            } else if (!scheduleAtRisk && deliveredLate) {
-                                diagnosisTag = '<span class="text-[10px] text-rose-600 font-bold mt-0.5">驗收落後（原時程充裕）</span>';
-                            }
-                        }
-
-                        // 進行中訂單的風險燈號僅供追蹤參考，不計入供應商分數，額外加註提醒避免與已完成訂單混淆
-                        var riskCellContent = riskLabel;
-                        if (isInProgress) {
-                            riskCellContent = `<div class="flex flex-col items-center">${riskLabel}<span class="text-[10px] text-slate-400 mt-0.5">(未計分，追蹤中)</span></div>`;
-                        } else if (diagnosisTag) {
-                            riskCellContent = `<div class="flex flex-col items-center">${riskLabel}${diagnosisTag}</div>`;
-                        }
-
-                        var projectCell = item.project
-                            ? `<span class="text-xs font-semibold text-slate-700">${item.project}</span>`
-                            : '<span class="text-slate-400">-</span>';
-
-                        // 進行中訂單整列套淺藍底色，讓長官掃視表格即可與已完成訂單區分，不必逐欄閱讀
-                        var rowClass = isInProgress
-                            ? 'bg-blue-50/60 hover:bg-blue-100/60 transition'
-                            : 'hover:bg-slate-50 transition';
-
-                        // Lead Time 與「前置時間不足天數」是同一組數字的兩種寫法（不足天數＝門檻－Lead Time，門檻固定90天已寫在標題說明），
-                        // 合併成一欄：主數字給 Lead Time 原始值，不足天數以小字副標呈現，省去長官心算換算
-                        var leadTimeCell = `<div class="flex flex-col items-center"><span class="font-mono font-bold ${scheduleAtRisk ? 'text-rose-600' : 'text-slate-700'}">${leadTime} 天</span>${overdueDays > 0 ? `<span class="text-[10px] text-rose-600 font-semibold mt-0.5">不足 ${overdueDays} 天</span>` : ''}</div>`;
-
-                        tbody.innerHTML += `
-                            <tr class="${rowClass}">
-                                <td class="py-4 px-6 text-center">${riskCellContent}</td>
-                                <td class="py-4 px-6 text-center">${statusBadge}</td>
-                                <td class="py-4 px-6 font-semibold text-slate-800">${item.product}</td>
-                                <td class="py-4 px-6 text-right font-mono text-slate-700">$${(item.orderAmount || 0).toLocaleString()}</td>
-                                <td class="py-4 px-6 text-center">${leadTimeCell}</td>
-                                <td class="py-4 px-6 font-mono text-slate-600">${item.confirmDate}</td>
-                                <td class="py-4 px-6 font-mono text-slate-600">${item.targetDate}</td>
-                                <td class="py-4 px-6 font-mono">${verifyCell}</td>
-                                <td class="py-4 px-6">${projectCell}</td>
-                                <td class="py-4 px-6 text-slate-600">${item.bu}</td>
-                                <td class="py-4 px-6 font-bold text-slate-700">${item.tml}</td>
-                                <td class="py-4 px-6 text-slate-500 font-mono">${item.pr}</td>
-                            </tr>
-                        `;
-                    }
-                }
-            }
-
-            // 頁尾彙總卡：總訂單數／At Risk 筆數與比率／At Risk 總金額／平均前置時間不足天數 —— 供第一層採購前置時間風險評分交叉核對
-            var fulfillAgg = computeFulfillmentAggregate(vendorId, threshold);
-            var totalOrdersEl = document.getElementById('level2d-total-orders');
-            var atRiskCountEl = document.getElementById('level2d-atrisk-count');
-            var atRiskAmountEl = document.getElementById('level2d-atrisk-amount');
-            var avgOverdueEl = document.getElementById('level2d-avg-overdue');
-            if (fulfillAgg) {
-                if (totalOrdersEl) totalOrdersEl.innerText = fulfillAgg.totalOrders;
-                if (atRiskCountEl) atRiskCountEl.innerText = fulfillAgg.atRiskCount + ' ／ ' + fulfillAgg.totalOrders + ' 筆 (' + fulfillAgg.atRiskRatio.toFixed(0) + '%)';
-                if (atRiskAmountEl) atRiskAmountEl.innerText = '$' + fulfillAgg.atRiskAmountSum.toLocaleString();
-                if (avgOverdueEl) avgOverdueEl.innerText = fulfillAgg.avgOverdueSeverity.toFixed(1) + ' 天';
+            if (tools.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">No temporary license record for this vendor / type</td></tr>';
             } else {
-                if (totalOrdersEl) totalOrdersEl.innerText = '-';
-                if (atRiskCountEl) atRiskCountEl.innerText = '-';
-                if (atRiskAmountEl) atRiskAmountEl.innerText = '-';
-                if (avgOverdueEl) avgOverdueEl.innerText = '-';
-            }
-
-            // 進行中訂單即時預警：不計入上方分數與彙總卡，僅提示管理者留意當下已顯露風險跡象的進行中訂單
-            var inProgressCount = computeInProgressAtRiskCount(vendorId, threshold);
-            var warningBox = document.getElementById('level2d-inprogress-warning');
-            var warningText = document.getElementById('level2d-inprogress-warning-text');
-            if (warningBox && warningText) {
-                if (inProgressCount > 0) {
-                    warningText.innerText = '另有 ' + inProgressCount + ' 筆進行中訂單目前已超過門檻天數，尚未計入上方分數，建議優先關注。';
-                    warningBox.classList.remove('hidden');
-                } else {
-                    warningBox.classList.add('hidden');
-                }
-            }
-        };
-
-        // ==================== 3. 篩選與大盤更新渲染核心 (全原生迴圈防崩潰) ====================
-        
-        window.setFilterYear = function(yearValue, buttonEl) {
-            state.filterYear = yearValue;
-            var buttons = document.querySelectorAll('#year-tabs button');
-            for (var i = 0; i < buttons.length; i++) {
-                if (buttons[i]) {
-                    buttons[i].classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
-                    buttons[i].classList.add('text-slate-600', 'hover:text-slate-900');
-                }
-            }
-            if (buttonEl) {
-                buttonEl.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
-                buttonEl.classList.remove('text-slate-600', 'hover:text-slate-900');
-            }
-            window.renderDashboard();
-        };
-
-        window.setFilterVendor = function(vendorValue) {
-            state.filterVendor = vendorValue;
-            window.renderDashboard();
-        };
-
-        window.setFilterType = function(type, buttonEl) {
-            state.filterType = type;
-            const buttons = document.querySelectorAll('#filter-tabs button');
-            for (var i = 0; i < buttons.length; i++) {
-                if (buttons[i]) {
-                    buttons[i].classList.remove('bg-white', 'text-slate-800', 'shadow-sm');
-                    buttons[i].classList.add('text-slate-600', 'hover:text-slate-900');
-                }
-            }
-            if (buttonEl) {
-                buttonEl.classList.add('bg-white', 'text-slate-800', 'shadow-sm');
-                buttonEl.classList.remove('text-slate-600', 'hover:text-slate-900');
-            }
-            window.renderDashboard();
-        };
-
-        window.handleSort = function(column) {
-            if (state.sortBy === column) {
-                state.sortDesc = !state.sortDesc;
-            } else {
-                state.sortBy = column;
-                state.sortDesc = false;
-            }
-            window.renderDashboard();
-        };
-
-        window.renderDashboard = function() {
-            try {
-                const activeYearData = yearlyData[state.filterYear];
-                let rawList = activeYearData.vendors;
-                let filtered = [];
-
-                // 迴圈篩選 (軟硬體與廠商組合)
-                for (var i = 0; i < rawList.length; i++) {
-                    var v = rawList[i];
-                    var matchVendor = (state.filterVendor === 'All' || v.vendor === state.filterVendor);
-                    var matchType = (state.filterType === 'All' || v.type === state.filterType);
-                    if (matchVendor && matchType) {
-                        filtered.push(v);
+                // 依符合條件數排序：At Risk 優先，其次 Watchlist，最後一般項目
+                var sorted = tools.slice();
+                for (var m = 0; m < sorted.length - 1; m++) {
+                    for (var n = 0; n < sorted.length - 1 - m; n++) {
+                        if (evaluateToolRisk(sorted[n]).met < evaluateToolRisk(sorted[n + 1]).met) {
+                            var tmp = sorted[n]; sorted[n] = sorted[n + 1]; sorted[n + 1] = tmp;
+                        }
                     }
                 }
 
-                // 排序控制
-                if (state.sortBy) {
-                    filtered.sort(function(a, b) {
-                        var valA = a[state.sortBy] !== undefined ? a[state.sortBy] : 0;
-                        var valB = b[state.sortBy] !== undefined ? b[state.sortBy] : 0;
-                        
-                        if (typeof valA === 'string') {
-                            valA = valA.toLowerCase();
-                            valB = (typeof valB === 'string') ? valB.toLowerCase() : '';
-                        }
-                        
-                        if (valA < valB) return state.sortDesc ? 1 : -1;
-                        if (valA > valB) return state.sortDesc ? -1 : 1;
-                        return 0;
-                    });
-                }
+                for (var i = 0; i < sorted.length; i++) {
+                    var t = sorted[i];
+                    var risk = evaluateToolRisk(t);
+                    totalFormal += t.formalQty;
+                    totalTemp += t.tempQty;
+                    totalLan += t.lan;
+                    totalWan += t.wan;
 
-                // 總額加總 (高相容純 for 迴圈，不含 reduce)
-                var totalBudget = 0;
-                var totalDemand = 0;
-                var totalSpending = 0;
-                var totalTemp = 0;
-                for (var j = 0; j < filtered.length; j++) {
-                    var item = filtered[j];
-                    totalBudget += item.budget || 0;
-                    totalDemand += item.demand || 0;
-                    totalSpending += item.spending || 0;
-                    totalTemp += item.temp || 0;
-                }
-
-                // 更新上方指標卡
-                var budgetEl = document.getElementById('kpi-budget');
-                var demandEl = document.getElementById('kpi-demand');
-                var spendingEl = document.getElementById('kpi-spending');
-                var tempEl = document.getElementById('kpi-temp');
-
-                if (budgetEl) budgetEl.innerText = '$' + totalBudget.toLocaleString();
-                if (demandEl) demandEl.innerText = '$' + totalDemand.toLocaleString();
-                if (spendingEl) spendingEl.innerText = '$' + totalSpending.toLocaleString();
-                if (tempEl) tempEl.innerText = '$' + totalTemp.toLocaleString();
-
-                // 表頭標題更新
-                var tableTitle = document.getElementById('table-title');
-                if (tableTitle) {
-                    if (state.filterVendor !== 'All') {
-                        tableTitle.innerText = state.filterVendor + ' 旗下授權明細 (觀測年度：' + state.filterYear + ')';
-                    } else {
-                        tableTitle.innerText = '各供應商費用總覽 (觀測年度：' + state.filterYear + ')';
+                    var riskCell = '<td class="py-3 px-4"></td>';
+                    if (risk.level === 'At Risk') {
+                        riskCell = '<td class="py-3 px-4 text-center bg-gsm-risk/40 text-rose-800 font-bold text-xs">At Risk</td>';
+                    } else if (risk.level === 'Watchlist') {
+                        riskCell = '<td class="py-3 px-4 text-center bg-gsm-watch text-slate-800 font-bold text-xs">Watchlist</td>';
                     }
+
+                    // 三項條件以底色標示是否成立：紅底代表該項風險條件已觸發，綠底代表未觸發
+                    var c2Class = risk.c2 ? 'bg-rose-100 text-rose-700 font-bold' : 'bg-emerald-50 text-emerald-700';
+                    var c3Class = risk.c3 ? 'bg-rose-100 text-rose-700 font-bold' : 'bg-emerald-50 text-emerald-700';
+
+                    tbody.innerHTML +=
+                        '<tr class="hover:bg-slate-50 transition">' +
+                            riskCell +
+                            '<td class="py-3 px-4 font-semibold text-slate-800">' + t.tool + '</td>' +
+                            '<td class="py-3 px-4 text-center font-mono ' + (risk.c1 ? 'text-rose-600 font-bold' : 'text-slate-700') + '">' + Math.round(risk.ratio) + '%</td>' +
+                            '<td class="py-3 px-4 text-center font-mono ' + c2Class + '">' + t.formalP95 + '%</td>' +
+                            '<td class="py-3 px-4 text-center font-mono ' + c3Class + '">' + t.tempP95 + '%</td>' +
+                            '<td class="py-3 px-4 text-center font-mono text-slate-700">' + t.formalQty + '</td>' +
+                            '<td class="py-3 px-4 text-center font-mono text-gsm-blue">' + t.tempQty + '</td>' +
+                            '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(t.lan) + '</td>' +
+                            '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(t.wan) + '</td>' +
+                            '<td class="py-3 px-4 text-slate-600">' + t.category + '</td>' +
+                            '<td class="py-3 px-4 text-slate-600">' + t.func + '</td>' +
+                            '<td class="py-3 px-4 font-semibold text-slate-700">' + t.tml + '</td>' +
+                        '</tr>';
                 }
-
-                // 第一層風險/績效欄位分數：僅需計算一次，不隨目前篩選/排序而變動
-                var borrowRiskScores = window.getAllVendorBorrowRiskScores();
-                var fulfillmentRiskScores = window.getAllVendorFulfillmentRiskScores();
-                var onTimeDeliveryScores = window.getAllVendorOnTimeDeliveryScores();
-                // 「進行中」訂單的即時預警筆數 (不影響上方分數，僅作為額外提示標籤)
-                var inProgressAtRiskCounts = window.getAllVendorInProgressAtRiskCounts();
-
-                // 重新渲染表格主體 (使用高相容原生 for 迴圈，排除任何 .forEach 原型方法)
-                var tbody = document.getElementById('main-table-body');
-                if (tbody) {
-                    tbody.innerHTML = '';
-                    for (var r = 0; r < filtered.length; r++) {
-                        var item = filtered[r];
-                        var budgetCellHtml = `<td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('${item.id}', '預算')">$${item.budget.toLocaleString()} ↗</td>`;
-                        var demandCellHtml = `<td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('${item.id}', '需求')">$${item.demand.toLocaleString()} ↗</td>`;
-                        var spendingCellHtml = `<td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2C('${item.id}', '實際花費')">$${item.spending.toLocaleString()} ↗</td>`;
-                        
-                        // 採購前置時間風險：頻率 (At Risk 比率%) × 嚴重度 (平均前置時間不足天數) 加權評分，顯示高／中／低風險 (僅適用於硬體類型)
-                        // 分數僅計算「已完成」訂單以維持穩定；「進行中」訂單的即時風險另外以獨立預警標籤呈現，不影響分數
-                        var riskCellHtml = '<td class="py-4 px-6 text-center text-slate-400">-</td>';
-                        if (item.type === 'Hardware') {
-                        var fulfillInfo = fulfillmentRiskScores[item.id];
-                        var inProgressCount = inProgressAtRiskCounts[item.id];
-                        var inProgressWarningHtml = inProgressCount
-                            ? `<div class="text-[10px] text-amber-600 font-bold mt-0.5">⚠️ 另有 ${inProgressCount} 筆進行中訂單預警</div>`
-                            : '';
-                        if (fulfillInfo) {
-                            // 金額不納入評分（避免高單價供應商即使流程良好也被打成高風險），但顯示於分數下方，
-                            // 讓長官能用「分數高 ＋ 金額大」交叉排序，決定先處理哪一家
-                            var fulfillSubtext = `<div class="text-[10px] text-slate-400 mt-0.5">At Risk比率${fulfillInfo.atRiskRatio.toFixed(0)}%，平均不足${fulfillInfo.avgOverdueSeverity.toFixed(1)}天</div>
-                                            <div class="text-[10px] text-slate-500 font-semibold">At Risk 金額 $${(fulfillInfo.atRiskAmountSum || 0).toLocaleString()}</div>`;
-                            if (fulfillInfo.level === 'High') {
-                                riskCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                        <div class="flex flex-col items-center">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 hover:underline">
-                                                <span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>高風險 (${fulfillInfo.score}) ↗
-                                            </span>
-                                            ${fulfillSubtext}
-                                            ${inProgressWarningHtml}
-                                        </div>
-                                    </td>`;
-                            } else if (fulfillInfo.level === 'Medium') {
-                                riskCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                        <div class="flex flex-col items-center">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 hover:underline">
-                                                <span class="w-2 h-2 rounded-full bg-amber-500 mr-1"></span>中風險 (${fulfillInfo.score}) ↗
-                                            </span>
-                                            ${fulfillSubtext}
-                                            ${inProgressWarningHtml}
-                                        </div>
-                                    </td>`;
-                            } else {
-                                riskCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                        <div class="flex flex-col items-center">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:underline">
-                                                低風險 (${fulfillInfo.score}) ↗
-                                            </span>
-                                            ${fulfillSubtext}
-                                            ${inProgressWarningHtml}
-                                        </div>
-                                    </td>`;
-                            }
-                        } else if (inProgressCount) {
-                            // 尚無已完成訂單可評分，但進行中訂單已顯露風險跡象，仍提供預警標籤並可點選查看細節
-                            riskCellHtml = `
-                                <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                    <div class="flex flex-col items-center">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 hover:underline">尚無已完成訂單 ↗</span>
-                                        ${inProgressWarningHtml}
-                                    </div>
-                                </td>`;
-                        }
-                        }
-
-                        // 供應商準時交付率：與上方「採購前置時間風險評分」是兩件不同的事——前者量測我方下單時給的緩衝夠不夠，
-                        // 這裡量測供應商本身交付表現，是唯一真正反映「這家供應商可不可靠」的欄位，因此獨立顯示、不與前置時間分數合併
-                        // (僅適用於硬體類型)。分數愈高愈好，色階與風險類分數相反。
-                        var onTimeCellHtml = '<td class="py-4 px-6 text-center text-slate-400">-</td>';
-                        if (item.type === 'Hardware') {
-                            var onTimeInfo = onTimeDeliveryScores[item.id];
-                            if (onTimeInfo) {
-                                var onTimeSubtext = `<div class="text-[10px] text-slate-400 mt-0.5">${onTimeInfo.onTimeCount}／${onTimeInfo.totalOrders} 筆準時</div>`;
-                                var onTimeBadgeClass = onTimeInfo.level === 'Good'
-                                    ? 'bg-emerald-50 text-emerald-700'
-                                    : (onTimeInfo.level === 'Caution' ? 'bg-amber-100 text-amber-800' : 'bg-rose-100 text-rose-800');
-                                var onTimeDot = onTimeInfo.level === 'Poor'
-                                    ? '<span class="w-2 h-2 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>'
-                                    : '';
-                                onTimeCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                        <div class="flex flex-col items-center">
-                                            <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold ${onTimeBadgeClass} hover:underline">
-                                                ${onTimeDot}準時 ${onTimeInfo.rate}% ↗
-                                            </span>
-                                            ${onTimeSubtext}
-                                        </div>
-                                    </td>`;
-                            } else if (inProgressCount) {
-                                onTimeCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2D('${item.id}')">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 hover:underline">尚無已完成訂單 ↗</span>
-                                    </td>`;
-                            }
-                        }
-
-                        // 臨時授權費用
-                        var tempCellHtml = item.temp === 0
-                            ? '<td class="py-4 px-6 text-right font-mono text-slate-400">$0</td>'
-                            : `<td class="py-4 px-6 text-right font-mono text-blue-600 hover:underline cursor-pointer" onclick="window.showLevel2A('${item.id}')">$${item.temp.toLocaleString()} ↗</td>`;
-
-                        // Borrow Risk：先彙總該供應商全部工具的原始數據，再於所有供應商間正規化評分，顯示高／中／低風險，方便長官在第一層即可分辨並點選展開細節
-                        var borrowRiskCellHtml = '<td class="py-4 px-6 text-center text-slate-400">-</td>';
-                        if (item.type === 'Software') {
-                            var riskInfo = borrowRiskScores[item.id];
-                            if (riskInfo) {
-                                var borrowSubtext = `<div class="text-[10px] text-slate-400 mt-0.5">整體借用率${riskInfo.rate.toFixed(1)}%，加總$${riskInfo.costSum.toLocaleString()}</div>`;
-                                if (riskInfo.level === 'High') {
-                                    borrowRiskCellHtml = `
-                                        <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2A('${item.id}')">
-                                            <div class="flex flex-col items-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-800 hover:underline">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse-red mr-1"></span>高風險 (${riskInfo.score}) ↗
-                                                </span>
-                                                ${borrowSubtext}
-                                            </div>
-                                        </td>`;
-                                } else if (riskInfo.level === 'Medium') {
-                                    borrowRiskCellHtml = `
-                                        <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2A('${item.id}')">
-                                            <div class="flex flex-col items-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-amber-100 text-amber-800 hover:underline">
-                                                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1"></span>中風險 (${riskInfo.score}) ↗
-                                                </span>
-                                                ${borrowSubtext}
-                                            </div>
-                                        </td>`;
-                                } else {
-                                    borrowRiskCellHtml = `
-                                        <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2A('${item.id}')">
-                                            <div class="flex flex-col items-center">
-                                                <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:underline">
-                                                    低風險 (${riskInfo.score}) ↗
-                                                </span>
-                                                ${borrowSubtext}
-                                            </div>
-                                        </td>`;
-                                }
-                            } else {
-                                borrowRiskCellHtml = `
-                                    <td class="py-4 px-6 text-center cursor-pointer" onclick="window.showLevel2A('${item.id}')">
-                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 hover:underline">
-                                            Sufficient ↗
-                                        </span>
-                                    </td>`;
-                            }
-                        } else {
-                            borrowRiskCellHtml = '<td class="py-4 px-6 text-center text-slate-400">N/A</td>';
-                        }
-
-                        tbody.innerHTML += `
-                            <tr class="hover:bg-slate-50/85 transition">
-                                <td class="py-4 px-6 font-semibold text-slate-800">${item.vendor}</td>
-                                <td><span class="px-2 py-1 text-xs font-medium rounded ${item.type === 'Software' ? 'bg-indigo-50 text-indigo-700' : 'bg-emerald-50 text-emerald-700'}">${item.type === 'Hardware Maintenance' ? 'Maintenance' : item.type}</span></td>
-                                ${demandCellHtml}
-                                ${budgetCellHtml}
-                                ${spendingCellHtml}
-                                ${riskCellHtml}
-                                ${onTimeCellHtml}
-                                ${borrowRiskCellHtml}
-                                ${tempCellHtml}
-                            </tr>
-                        `;
-                    }
-                }
-
-                updateSortIcons();
-            } catch (e) {
-                console.error("更新儀表板時發生異常中斷：", e);
             }
+
+            document.getElementById('layer4c-total-formal').innerText = totalFormal || '-';
+            document.getElementById('layer4c-total-temp').innerText = totalTemp || '-';
+            document.getElementById('layer4c-total-lan').innerText = totalLan ? money(totalLan) : '-';
+            document.getElementById('layer4c-total-wan').innerText = totalWan ? money(totalWan) : '-';
         };
 
-        // 排序表頭箭頭刷新
-        function updateSortIcons() {
-            const iconVendor = document.getElementById('sort-icon-vendor');
-            const iconType = document.getElementById('sort-icon-type');
-            const iconTemp = document.getElementById('sort-icon-temp');
+        // ==================== 篩選器 ====================
+        window.setFilterYear = function(v) { state.filterYear = v; window.showLayer3(); };
+        window.setFilterVendor = function(v) { state.filterVendor = v; window.renderLayer3(); };
+        window.setFilterType = function(v) { state.filterType = v; window.renderLayer3(); };
 
-            if (iconVendor) iconVendor.innerText = state.sortBy === 'vendor' ? (state.sortDesc ? '▼' : '▲') : '⇅';
-            if (iconType) iconType.innerText = state.sortBy === 'type' ? (state.sortDesc ? '▼' : '▲') : '⇅';
-            if (iconTemp) iconTemp.innerText = state.sortBy === 'temp' ? (state.sortDesc ? '▼' : '▲') : '⇅';
-        }
-
-        // ==================== 4. 系統多重加載守衛 ====================
-        function initPage() {
-            const dateSpan = document.getElementById('current-date-span');
-            if (dateSpan) {
-                const today = new Date();
-                const yyyy = today.getFullYear();
-                const mm = String(today.getMonth() + 1).padStart(2, '0');
-                const dd = String(today.getDate()).padStart(2, '0');
-                dateSpan.innerText = yyyy + '/' + mm + '/' + dd;
-            }
-            window.renderDashboard();
-        }
-
-        if (document.readyState === 'complete' || document.readyState === 'interactive') {
-            setTimeout(initPage, 1);
-        } else {
-            window.addEventListener('DOMContentLoaded', initPage);
-        }
+        // ==================== 初始化 ====================
+        window.renderLayer3();
     </script>
 </body>
-</html>                                                                                                                                                                                                                                                                                                                                                                            
+</html>
