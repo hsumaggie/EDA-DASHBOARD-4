@@ -108,7 +108,7 @@
             </div>
 
             <!-- KPI 卡片 -->
-            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-5">
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-5">
                 <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
                     <span class="text-base font-bold text-slate-700">Demand</span>
                     <span class="text-2xl font-bold text-gsm-blue" id="kpi-demand">$0</span>
@@ -120,10 +120,6 @@
                 <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
                     <span class="text-base font-bold text-slate-700">Spending</span>
                     <span class="text-2xl font-bold text-gsm-blue" id="kpi-spending">$0</span>
-                </div>
-                <div class="bg-gsm-tealLight rounded-lg px-5 py-4 flex items-center justify-between gap-3">
-                    <span class="text-base font-bold text-slate-700 leading-tight">Temporary<br>License Fee</span>
-                    <span class="text-2xl font-bold text-gsm-blue" id="kpi-temp">$0</span>
                 </div>
             </div>
 
@@ -147,9 +143,7 @@
                                 </th>
                                 <th class="py-3 px-4 text-center">Spending vs.<br>Budget (%)</th>
                                 <th class="py-3 px-4 text-center">On-Time PR<br>Rate %</th>
-                                <th class="py-3 px-4 text-center">Supplier On-Time<br>Delivery Rate %</th>
                                 <th class="py-3 px-4 text-center">Add-on<br>Purchase Risk</th>
-                                <th class="py-3 px-4 text-right">Temporary<br>License Fee</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200" id="layer3-table-body"></tbody>
@@ -159,8 +153,8 @@
 
             <p class="text-xs text-slate-500 mt-3">
                 提示：點擊 <span class="font-semibold text-gsm-blue">Demand / Budget / Spending Amount</span>、
-                <span class="font-semibold text-gsm-blue">On-Time PR Rate / Supplier On-Time Delivery Rate</span>、
-                <span class="font-semibold text-gsm-blue">Add-on Purchase Risk / Temporary License Fee</span> 之數值，可穿透展開至 Layer 4 明細。
+                <span class="font-semibold text-gsm-blue">On-Time PR Rate</span>、
+                <span class="font-semibold text-gsm-blue">Add-on Purchase Risk</span> 之數值，可穿透展開至 Layer 4 明細。
             </p>
         </div>
 
@@ -202,15 +196,12 @@
             </div>
         </div>
 
-        <!-- ==================== Layer 4B：On-Time PR / Supplier On-Time Delivery ==================== -->
+        <!-- ==================== Layer 4B：On-Time PR ==================== -->
         <div id="layer4b-dashboard" class="hidden">
             <div class="flex justify-between items-start mb-4 gap-4">
                 <div>
                     <p class="text-base font-bold text-slate-800">
                         On-Time PR Rate % (<span class="year-span"></span>) - <span id="layer4b-pr-rate" class="text-gsm-blue"></span>
-                    </p>
-                    <p class="text-base font-bold text-slate-800">
-                        Supplier On-Time Delivery Rate % (<span class="year-span"></span>) - <span id="layer4b-delivery-rate" class="text-gsm-blue"></span>
                     </p>
                     <p class="text-lg font-bold text-gsm-blue mt-1" id="layer4b-vendor-title"></p>
                 </div>
@@ -224,18 +215,14 @@
                     <table class="w-full text-left border-collapse text-sm">
                         <thead>
                             <tr class="bg-gsm-teal text-white text-xs font-bold align-bottom">
-                                <th class="py-3 px-4">PR status</th>
                                 <th class="py-3 px-4">Product Name</th>
                                 <th class="py-3 px-4 text-right">Spending<br>Amount ($)</th>
                                 <th class="py-3 px-4">PR Requesting<br>Unit</th>
                                 <th class="py-3 px-4">Project Information</th>
                                 <th class="py-3 px-4">TML</th>
-                                <th class="py-3 px-4 text-center">PR Lead Time<br>(&lt; 90 Days)</th>
-                                <th class="py-3 px-4 text-center">PR Lead Time<br>Shortfall (Days)</th>
+                                <th class="py-3 px-4 text-center">PR Lead Time<br>(STD=90 Days)</th>
                                 <th class="py-3 px-4">PR Completion<br>Date</th>
                                 <th class="py-3 px-4">Project Required<br>Date</th>
-                                <th class="py-3 px-4">Supplier Delivery<br>Date</th>
-                                <th class="py-3 px-4">Acceptance<br>Completion Date</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200" id="layer4b-table-body"></tbody>
@@ -245,8 +232,7 @@
 
             <div class="mt-4 text-xs text-slate-600 space-y-1">
                 <p>• PR Lead Time = Project Required Date – PR Completion Date.</p>
-                <p>• On-Time PR Rate % = (Number of PRs with PR Lead Time Shortfall (Days) = 0 ÷ Total Number of Completed PRs) × 100</p>
-                <p>• Supplier On-Time Delivery Rate % = (Number of On-Time PRs ÷ Total Number of Completed PRs) × 100</p>
+                <p>• On-Time PR Rate % = (Number of PRs with PR Lead Time &gt;= 90 Days ÷ Total Number of PRs) × 100</p>
             </div>
         </div>
 
@@ -278,32 +264,12 @@
                                 <th class="py-3 px-4 text-center">Borrow<br>Duration<br>Ratio %</th>
                                 <th class="py-3 px-4 text-center">YTD Formal<br>License P95<br>U-rate% ≥ 70%</th>
                                 <th class="py-3 px-4 text-center">YTD Temp<br>License P95<br>U-rate% ≥ 70%</th>
-                                <th class="py-3 px-4 text-center">Formal<br>License Qty</th>
-                                <th class="py-3 px-4 text-center">Avg. Temp<br>License Qty</th>
-                                <th class="py-3 px-4 text-right">LAN ($)</th>
-                                <th class="py-3 px-4 text-right">WAN ($)</th>
                                 <th class="py-3 px-4">Category</th>
                                 <th class="py-3 px-4">Function</th>
                                 <th class="py-3 px-4">TML</th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-200" id="layer4c-table-body"></tbody>
-                        <tfoot>
-                            <tr class="bg-slate-50 border-t-2 border-slate-300 text-sm font-bold text-slate-700">
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4">Total Σ</td>
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4 text-center font-mono" id="layer4c-total-formal">-</td>
-                                <td class="py-3 px-4 text-center font-mono" id="layer4c-total-temp">-</td>
-                                <td class="py-3 px-4 text-right font-mono" id="layer4c-total-lan">-</td>
-                                <td class="py-3 px-4 text-right font-mono" id="layer4c-total-wan">-</td>
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4"></td>
-                                <td class="py-3 px-4"></td>
-                            </tr>
-                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -379,7 +345,7 @@
                 prTracking: {
                     "Synopsys_HW": [
                         { status: "Completed",   product: "HPC Processing Server Rack", spending: 600000, bu: "GPU Verification BU", project: "N3P Alpha Project", tml: "CC Mao", prCompletionDate: "2026/02/01", projectRequiredDate: "2026/03/15", supplierDeliveryDate: "2026/03/14", acceptanceDate: "2026/03/18" },
-                        { status: "In Progress", product: "GPU Compute Expansion Rack", spending: 400000, bu: "CPU Design BU",       project: "N2 Ultra Project",  tml: "CW Ko",  prCompletionDate: "2026/01/10", projectRequiredDate: "2026/03/20", supplierDeliveryDate: "2026/03/21", acceptanceDate: null }
+                        { status: "Completed", product: "GPU Compute Expansion Rack", spending: 400000, bu: "CPU Design BU",       project: "N2 Ultra Project",  tml: "CW Ko",  prCompletionDate: "2026/01/10", projectRequiredDate: "2026/03/20", supplierDeliveryDate: "2026/03/21", acceptanceDate: null }
                     ],
                     "Cadence_HW": []
                 },
@@ -592,31 +558,24 @@
             return hasAtRisk ? 'At Risk' : (hasWatchlist ? 'Watchlist' : '');
         };
 
-        // PR 指標：
+        // PR 指標（Layer 4B 現在只列示已完成 PR，不再區分進行中狀態）：
         // PR Lead Time = Project Required Date － PR Completion Date
-        // PR Lead Time Shortfall = MAX(90 － PR Lead Time, 0)
-        // On-Time PR Rate % = Shortfall = 0 的筆數 ÷ 已完成 PR 總數 × 100
-        // Supplier On-Time Delivery Rate % = 供應商交付日 ≤ 專案需求日 的筆數 ÷ 已完成 PR 總數 × 100
+        // On-Time PR Rate % = PR Lead Time >= 90 天 的筆數 ÷ 總 PR 筆數 × 100
         window.getVendorPrMetrics = function(vendorId) {
             var records = (yearlyData[state.filterYear].prTracking || {})[vendorId] || [];
             if (records.length === 0) return null;
 
-            var prTotal = 0, prOnTime = 0, deliveryTotal = 0, deliveryOnTime = 0;
+            var prTotal = 0, prOnTime = 0;
             for (var i = 0; i < records.length; i++) {
                 var rec = records[i];
                 if (rec.prCompletionDate && rec.projectRequiredDate) {
                     prTotal++;
                     var leadTime = getDaysDiff(rec.prCompletionDate, rec.projectRequiredDate);
-                    if (Math.max(PR_LEAD_TIME_THRESHOLD - leadTime, 0) === 0) prOnTime++;
-                }
-                if (rec.supplierDeliveryDate && rec.projectRequiredDate) {
-                    deliveryTotal++;
-                    if (new Date(rec.supplierDeliveryDate) <= new Date(rec.projectRequiredDate)) deliveryOnTime++;
+                    if (leadTime >= PR_LEAD_TIME_THRESHOLD) prOnTime++;
                 }
             }
             return {
-                prRate: prTotal > 0 ? Math.round((prOnTime / prTotal) * 100) : null,
-                deliveryRate: deliveryTotal > 0 ? Math.round((deliveryOnTime / deliveryTotal) * 100) : null
+                prRate: prTotal > 0 ? Math.round((prOnTime / prTotal) * 100) : null
             };
         };
 
@@ -646,24 +605,22 @@
                 filtered.push(v);
             }
 
-            var totalDemand = 0, totalBudget = 0, totalSpending = 0, totalTemp = 0, scale = 0;
+            var totalDemand = 0, totalBudget = 0, totalSpending = 0, scale = 0;
             for (var k = 0; k < filtered.length; k++) {
                 totalDemand += filtered[k].demand;
                 totalBudget += filtered[k].budget;
                 totalSpending += filtered[k].spending;
-                totalTemp += filtered[k].temp;
                 if (filtered[k].budget > scale) scale = filtered[k].budget;
                 if (filtered[k].spending > scale) scale = filtered[k].spending;
             }
             document.getElementById('kpi-demand').innerText = money(totalDemand);
             document.getElementById('kpi-budget').innerText = money(totalBudget);
             document.getElementById('kpi-spending').innerText = money(totalSpending);
-            document.getElementById('kpi-temp').innerText = money(totalTemp);
 
             var tbody = document.getElementById('layer3-table-body');
             tbody.innerHTML = '';
             if (filtered.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="11" class="py-8 text-center text-slate-400">No data for current filter</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-400">No data for current filter</td></tr>';
                 return;
             }
 
@@ -673,9 +630,8 @@
                 var pct = item.budget > 0 ? Math.round((item.spending / item.budget) * 100) : 0;
                 var pctClass = pct > 100 ? 'text-rose-600 font-bold' : 'text-slate-700';
 
-                // On-Time PR Rate / Supplier On-Time Delivery Rate：僅硬體採購適用；硬體但無 PR 紀錄顯示 NA
+                // On-Time PR Rate：僅硬體採購適用；硬體但無 PR 紀錄顯示 NA
                 var prCell = '<td class="py-3 px-4 text-center text-slate-400">-</td>';
-                var deliveryCell = '<td class="py-3 px-4 text-center text-slate-400">-</td>';
                 if (item.type === 'Hardware') {
                     var m = window.getVendorPrMetrics(item.id);
                     if (m && m.prRate !== null) {
@@ -683,14 +639,9 @@
                     } else {
                         prCell = '<td class="py-3 px-4 text-center text-slate-400">NA</td>';
                     }
-                    if (m && m.deliveryRate !== null) {
-                        deliveryCell = '<td class="py-3 px-4 text-center font-semibold text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4B(\'' + item.id + '\')">' + m.deliveryRate + '%</td>';
-                    } else {
-                        deliveryCell = '<td class="py-3 px-4 text-center text-slate-400">NA</td>';
-                    }
                 }
 
-                // Add-on Purchase Risk：僅臨時授權（軟體）適用
+                // Add-on Purchase Risk：僅臨時授權（軟體）適用；也是進入 Layer 4C 的唯一入口
                 var riskLevel = window.getVendorAddOnRisk(item.id);
                 var riskCell = '<td class="py-3 px-4"></td>';
                 if (riskLevel === 'At Risk') {
@@ -698,10 +649,6 @@
                 } else if (riskLevel === 'Watchlist') {
                     riskCell = '<td class="py-3 px-4 text-center bg-gsm-watch text-slate-800 font-bold text-xs cursor-pointer hover:underline" onclick="window.showLayer4C(\'' + item.id + '\')">Watchlist</td>';
                 }
-
-                var tempCell = item.temp === 0
-                    ? '<td class="py-3 px-4 text-right font-mono text-slate-400">$0</td>'
-                    : '<td class="py-3 px-4 text-right font-mono text-gsm-blue hover:underline cursor-pointer" onclick="window.showLayer4C(\'' + item.id + '\')">' + money(item.temp) + '</td>';
 
                 tbody.innerHTML +=
                     '<tr class="hover:bg-slate-50 transition">' +
@@ -713,9 +660,7 @@
                         buildBarCell(item.spending, item.budget, scale) +
                         '<td class="py-3 px-4 text-center font-mono ' + pctClass + '">' + pct + '%</td>' +
                         prCell +
-                        deliveryCell +
                         riskCell +
-                        tempCell +
                     '</tr>';
             }
         };
@@ -797,62 +742,44 @@
             }
         };
 
-        // ---- Layer 4B：On-Time PR / Supplier On-Time Delivery ----
+        // ---- Layer 4B：On-Time PR ----
         window.showLayer4B = function(vendorId) {
             var name = getDisplayName(vendorId);
-            switchLayer('layer4b-dashboard', 'On-Time PR / Supplier Delivery — ' + name);
+            switchLayer('layer4b-dashboard', 'On-Time PR — ' + name);
             document.getElementById('layer4b-vendor-title').innerText = name;
 
             var metrics = window.getVendorPrMetrics(vendorId);
             document.getElementById('layer4b-pr-rate').innerText = (metrics && metrics.prRate !== null) ? metrics.prRate + '%' : 'NA';
-            document.getElementById('layer4b-delivery-rate').innerText = (metrics && metrics.deliveryRate !== null) ? metrics.deliveryRate + '%' : 'NA';
 
             var records = (yearlyData[state.filterYear].prTracking || {})[vendorId] || [];
             var tbody = document.getElementById('layer4b-table-body');
             tbody.innerHTML = '';
             if (records.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">No PR record for this vendor / type</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">No PR record for this vendor / type</td></tr>';
                 return;
             }
 
             for (var i = 0; i < records.length; i++) {
                 var rec = records[i];
                 var leadTime = getDaysDiff(rec.prCompletionDate, rec.projectRequiredDate);
-                var shortfall = Math.max(PR_LEAD_TIME_THRESHOLD - leadTime, 0);
-                // PR Lead Time > 90 天（等同 Shortfall = 0）代表準備時間足夠 → 綠字；反之標紅提醒
-                var leadClass = shortfall === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
-                var shortfallClass = shortfall === 0 ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
-
-                // 供應商交付日早於專案需求日 → 綠字（提早交付）；晚於 → 紅字（delay）；剛好同一天 → 中性灰
-                var deliveryClass = 'text-slate-600';
-                if (rec.supplierDeliveryDate && rec.projectRequiredDate) {
-                    var deliveryDiff = new Date(rec.supplierDeliveryDate) - new Date(rec.projectRequiredDate);
-                    if (deliveryDiff < 0) deliveryClass = 'text-emerald-600 font-bold';
-                    else if (deliveryDiff > 0) deliveryClass = 'text-rose-600 font-bold';
-                }
+                // PR Lead Time >= 90 天代表準備時間足夠 → 綠字；反之標紅提醒
+                var leadClass = leadTime >= PR_LEAD_TIME_THRESHOLD ? 'text-emerald-600 font-bold' : 'text-rose-600 font-bold';
 
                 // PR Completion Date 早於 Project Required Date（即 leadTime > 0）→ 綠字；晚於 → 紅字；同一天 → 中性灰
                 var prCompletionClass = 'text-slate-600';
                 if (leadTime > 0) prCompletionClass = 'text-emerald-600 font-bold';
                 else if (leadTime < 0) prCompletionClass = 'text-rose-600 font-bold';
 
-                var statusClass = rec.status === 'In Progress' ? 'text-gsm-blue font-bold' : 'font-bold text-slate-700';
-                var rowClass = rec.status === 'In Progress' ? 'bg-blue-50/50 hover:bg-blue-100/50' : 'hover:bg-slate-50';
-
                 tbody.innerHTML +=
-                    '<tr class="' + rowClass + ' transition">' +
-                        '<td class="py-3 px-4 ' + statusClass + '">' + rec.status + '</td>' +
+                    '<tr class="hover:bg-slate-50 transition">' +
                         '<td class="py-3 px-4 font-semibold text-slate-800">' + rec.product + '</td>' +
                         '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(rec.spending) + '</td>' +
                         '<td class="py-3 px-4 text-slate-600">' + rec.bu + '</td>' +
                         '<td class="py-3 px-4 text-slate-600">' + rec.project + '</td>' +
                         '<td class="py-3 px-4 font-semibold text-slate-700">' + rec.tml + '</td>' +
                         '<td class="py-3 px-4 text-center font-mono ' + leadClass + '">' + leadTime + '</td>' +
-                        '<td class="py-3 px-4 text-center font-mono ' + shortfallClass + '">' + shortfall + '</td>' +
                         '<td class="py-3 px-4 font-mono text-xs ' + prCompletionClass + '">' + (rec.prCompletionDate || '-') + '</td>' +
                         '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + (rec.projectRequiredDate || '-') + '</td>' +
-                        '<td class="py-3 px-4 font-mono text-xs ' + deliveryClass + '">' + (rec.supplierDeliveryDate || '-') + '</td>' +
-                        '<td class="py-3 px-4 font-mono text-slate-600 text-xs">' + (rec.acceptanceDate || '-') + '</td>' +
                     '</tr>';
             }
         };
@@ -873,10 +800,8 @@
             var tbody = document.getElementById('layer4c-table-body');
             tbody.innerHTML = '';
 
-            var totalFormal = 0, totalTemp = 0, totalLan = 0, totalWan = 0;
-
             if (tools.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="12" class="py-8 text-center text-slate-400">No tool currently meets the Add-on Purchase Risk Watchlist criteria</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-400">No tool currently meets the Add-on Purchase Risk Watchlist criteria</td></tr>';
             } else {
                 // 依符合條件數排序：At Risk 優先，其次 Watchlist，最後一般項目
                 var sorted = tools.slice();
@@ -891,10 +816,6 @@
                 for (var i = 0; i < sorted.length; i++) {
                     var t = sorted[i];
                     var risk = evaluateToolRisk(t);
-                    totalFormal += t.formalQty;
-                    totalTemp += t.tempQty;
-                    totalLan += t.lan;
-                    totalWan += t.wan;
 
                     var riskCell = '<td class="py-3 px-4"></td>';
                     if (risk.level === 'At Risk') {
@@ -903,32 +824,25 @@
                         riskCell = '<td class="py-3 px-4 text-center bg-gsm-watch text-slate-800 font-bold text-xs">Watchlist</td>';
                     }
 
-                    // 三項條件以底色標示是否成立：紅底代表該項風險條件已觸發，綠底代表未觸發
-                    var c2Class = risk.c2 ? 'bg-rose-100 text-rose-700 font-bold' : 'bg-emerald-50 text-emerald-700';
-                    var c3Class = risk.c3 ? 'bg-rose-100 text-rose-700 font-bold' : 'bg-emerald-50 text-emerald-700';
+                    // 三項條件以 YES/NO 標示是否成立：紅字YES代表該項風險條件已觸發，綠字NO代表未觸發
+                    var c2Text = risk.c2 ? 'YES' : 'NO';
+                    var c3Text = risk.c3 ? 'YES' : 'NO';
+                    var c2Class = risk.c2 ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold';
+                    var c3Class = risk.c3 ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold';
 
                     tbody.innerHTML +=
                         '<tr class="hover:bg-slate-50 transition">' +
                             riskCell +
                             '<td class="py-3 px-4 font-semibold text-slate-800">' + t.tool + '</td>' +
                             '<td class="py-3 px-4 text-center font-mono ' + (risk.c1 ? 'text-rose-600 font-bold' : 'text-emerald-600 font-bold') + '">' + Math.round(risk.ratio) + '%</td>' +
-                            '<td class="py-3 px-4 text-center font-mono ' + c2Class + '">' + t.formalP95 + '%</td>' +
-                            '<td class="py-3 px-4 text-center font-mono ' + c3Class + '">' + t.tempP95 + '%</td>' +
-                            '<td class="py-3 px-4 text-center font-mono text-slate-700">' + t.formalQty + '</td>' +
-                            '<td class="py-3 px-4 text-center font-mono text-gsm-blue">' + t.tempQty + '</td>' +
-                            '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(t.lan) + '</td>' +
-                            '<td class="py-3 px-4 text-right font-mono text-slate-700">' + money(t.wan) + '</td>' +
+                            '<td class="py-3 px-4 text-center font-mono ' + c2Class + '">' + c2Text + '</td>' +
+                            '<td class="py-3 px-4 text-center font-mono ' + c3Class + '">' + c3Text + '</td>' +
                             '<td class="py-3 px-4 text-slate-600">' + t.category + '</td>' +
                             '<td class="py-3 px-4 text-slate-600">' + t.func + '</td>' +
                             '<td class="py-3 px-4 font-semibold text-slate-700">' + t.tml + '</td>' +
                         '</tr>';
                 }
             }
-
-            document.getElementById('layer4c-total-formal').innerText = totalFormal || '-';
-            document.getElementById('layer4c-total-temp').innerText = totalTemp || '-';
-            document.getElementById('layer4c-total-lan').innerText = totalLan ? money(totalLan) : '-';
-            document.getElementById('layer4c-total-wan').innerText = totalWan ? money(totalWan) : '-';
         };
 
         // ==================== 篩選器 ====================
